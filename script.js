@@ -3,9 +3,13 @@ function autenticar() {
     const codigoInput = document.getElementById('codigo').value.trim();
     const mensagem = document.getElementById('mensagem');
 
+    if (!emailInput || !codigoInput) {
+        mensagem.innerHTML = "<span style='color:red;'>Por favor, preencha todos os campos.</span>";
+        return;
+    }
+
     mensagem.innerHTML = "Carregando banco de dados...";
 
-    // Lendo o arquivo CSV que vocÍ subiu no GitHub
     Papa.parse("database.csv", {
         download: true,
         header: true,
@@ -13,26 +17,25 @@ function autenticar() {
         complete: function(results) {
             const dados = results.data;
             
-            // Procura o trabalho pelo "N˙mero"
-            const trabalho = dados.find(t => t.N˙mero === codigoInput);
+            // Busca o trabalho pelo campo "N√∫mero"
+            const trabalho = dados.find(t => String(t.N√∫mero).trim() === codigoInput);
 
             if (trabalho) {
-                // Verifica se o email est· na lista de emails (separados por vÌrgula no Even3)
-                const emailsNoBanco = trabalho.Emails.toLowerCase();
+                // Garante que o campo Emails exista antes de converter para min√∫sculo
+                const emailsNoBanco = trabalho.Emails ? trabalho.Emails.toLowerCase() : "";
                 
                 if (emailsNoBanco.includes(emailInput)) {
-                    // Se for sucesso, salva os dados na sess„o e vai para o painel
                     localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
                     window.location.href = "dashboard.html";
                 } else {
-                    mensagem.innerHTML = "<span style='color:red;'>E-mail n„o autorizado para este cÛdigo.</span>";
+                    mensagem.innerHTML = "<span style='color:red;'>E-mail n√£o autorizado para este c√≥digo.</span>";
                 }
             } else {
-                mensagem.innerHTML = "<span style='color:red;'>CÛdigo de trabalho n„o encontrado.</span>";
+                mensagem.innerHTML = "<span style='color:red;'>C√≥digo de trabalho n√£o encontrado.</span>";
             }
         },
         error: function() {
-            mensagem.innerHTML = "<span style='color:red;'>Erro ao ler o banco de dados. Verifique o arquivo CSV.</span>";
+            mensagem.innerHTML = "<span style='color:red;'>Erro ao ler o arquivo CSV. Verifique se o nome √© database.csv</span>";
         }
     });
 }
