@@ -2,63 +2,133 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel do Trabalho - ABEFACO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Autor - ABEFACO</title>
     <style>
-        :root { --azul: #0054A6; --verde: #4FB848; --laranja: #F9A825; }
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .header { border-bottom: 4px solid var(--laranja); margin-bottom: 20px; }
-        .info-box { background: #eef2f7; padding: 15px; border-left: 5px solid var(--azul); margin-bottom: 20px; }
-        .pdf-viewer { width: 100%; height: 600px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .btn-voltar { text-decoration: none; color: var(--azul); font-weight: bold; }
+        :root {
+            --azul-abefaco: #0054A6;
+            --dourado-abefaco: #F9A825;
+            --bg: #f4f7f6;
+            --header-height: 80px;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding-top: var(--header-height); /* Espa√ßo para o cabe√ßalho fixo */
+        }
+        /* Cabe√ßalho Fixo com a Logo no Canto Superior Esquerdo */
+        header { 
+            background: white; 
+            color: var(--azul-abefaco); 
+            padding: 0 30px; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: var(--header-height);
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+            z-index: 1000;
+            box-sizing: border-box;
+            border-bottom: 3px solid var(--azul-abefaco);
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+        }
+        .logo-interna { 
+            height: 60px; /* Altura controlada para caber no cabe√ßalho */
+            width: auto;
+            margin-right: 15px;
+        }
+        .app-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+        button#btnSair { 
+            background: transparent; 
+            border: 2px solid var(--azul-abefaco); 
+            color: var(--azul-abefaco); 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        button#btnSair:hover { 
+            background: var(--azul-abefaco); 
+            color: white; 
+        }
+        /* Conte√∫do Principal */
+        .container { padding: 40px; max-width: 1200px; margin: 0 auto; }
+        .card { background: white; padding: 25px; border-radius: 12px; shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .titulo-trabalho { font-size: 24px; font-weight: 800; color: var(--azul-abefaco); margin: 0; }
+        .visualizador-container { height: 75vh; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; background: #eee; }
+        iframe { width: 100%; height: 100%; border: none; }
     </style>
 </head>
 <body>
 
+<header>
+    <div class="logo-area">
+        <img src="logo.png" alt="Logo ABEFACO" class="logo-interna">
+        <span class="app-title">II Congresso Brasileiro | e-Poster</span>
+    </div>
+    <button id="btnSair" onclick="sair()">Sair</button>
+</header>
+
 <div class="container">
-    <div class="header">
-        <a href="index.html" class="btn-voltar">? Sair</a>
-        <h1 style="color: var(--azul);">Detalhes do Trabalho</h1>
+    <div class="card">
+        <h1 class="titulo-trabalho" id="trabalhoTitulo">T√≠tulo do Trabalho</h1>
+        <p style="color: #666; margin-bottom: 0;">Autor(a): <span id="autorNome" style="font-weight:600; color:#333;">...</span></p>
     </div>
 
-    <div id="conteudoTrabalho">
+    <div class="visualizador-container" id="posterArea">
         </div>
-
-    <div id="areaPoster" class="pdf-viewer">
-        Verificando e-Poster...
-    </div>
 </div>
 
 <script>
-    const trabalho = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    // Recupera os dados salvos no login (se houver)
+    var dados = JSON.parse(localStorage.getItem('trabalhoAtivo'));
 
-    if (!trabalho) {
+    if (!dados) {
+        // Se n√£o houver dados, redireciona para o login por seguran√ßa
         window.location.href = "index.html";
+    } else {
+        // Preenche o layout com as informa√ß√µes reais
+        document.getElementById('trabalhoTitulo').textContent = dados.T√≠tulo;
+        
+        // Separa o primeiro autor (o Even3 envia uma lista separada por v√≠rgula)
+        var primeiroAutor = dados.Autores.split(',')[0];
+        document.getElementById('autorNome').textContent = primeiroAutor;
+
+        // Tenta carregar o PDF da pasta /posters com o n√∫mero do trabalho
+        var pdfPath = 'posters/' + String(dados.N√∫mero).trim() + '.pdf';
+        
+        var viewerArea = document.getElementById('posterArea');
+        
+        // Usa o fetch para checar se o PDF existe antes de tentar carregar
+        fetch(pdfPath, { method: 'HEAD' }).then(function(res) {
+            if (res.ok) {
+                // Se existe, carrega no iframe
+                viewerArea.innerHTML = '<iframe src="' + pdfPath + '#toolbar=0" title="Visualizador do e-Poster"></iframe>';
+            } else {
+                // Se n√£o existe, mostra mensagem amig√°vel
+                viewerArea.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; font-size:18px; color:#555; text-align:center; padding:20px;">' +
+                                      'PDF do e-Poster ainda n√£o dispon√≠vel para este trabalho.<br><br>Por favor, aguarde a publica√ß√£o oficial.</div>';
+            }
+        });
     }
 
-    document.getElementById('conteudoTrabalho').innerHTML = `
-        <div class="info-box">
-            <h3>${trabalho.TÌtulo}</h3>
-            <p><strong>ID:</strong> ${trabalho.N˙mero}</p>
-            <p><strong>¡rea:</strong> ${trabalho['¡rea Tem·tica']}</p>
-            <p><strong>Autores:</strong> ${trabalho.Autores}</p>
-        </div>
-    `;
-
-    // LÛgica para verificar se o PDF existe na pasta /posters/
-    const urlPoster = `posters/${trabalho.N˙mero}.pdf`;
-    
-    fetch(urlPoster).then(res => {
-        if (res.ok) {
-            document.getElementById('areaPoster').innerHTML = `<embed src="${urlPoster}" type="application/pdf" width="100%" height="100%" />`;
-        } else {
-            document.getElementById('areaPoster').innerHTML = `
-                <div>
-                    <p style="color:red;">PDF do e-Poster ainda n„o disponÌvel.</p>
-                    <p>Por favor, envie o arquivo para a organizaÁ„o.</p>
-                </div>`;
-        }
-    });
+    function sair() {
+        // Limpa a sess√£o e volta ao login
+        localStorage.removeItem('trabalhoAtivo');
+        window.location.href = "index.html";
+    }
 </script>
 </body>
 </html>
