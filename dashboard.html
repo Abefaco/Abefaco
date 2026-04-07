@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Gestão e-Posters - ABEFACO</title>
+    <title>Painel de e-Posters - ABEFACO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root {
             --azul: #0054A6;
-            --dourado: #F9A825;
-            --cinza-fundo: #f4f7f6;
+            --fundo: #f4f7f6;
             --branco: #ffffff;
+            --verde: #2e7d32;
+            --vermelho: #d32f2f;
         }
-        
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--cinza-fundo); padding-top: 80px; }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--fundo); padding-top: 80px; }
         
         /* Header Fixo */
         header { 
-            background: var(--branco); padding: 0 30px; height: 70px;
+            background: var(--branco); padding: 0 25px; height: 70px;
             position: fixed; top: 0; width: 100%; box-sizing: border-box;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000;
@@ -26,110 +27,106 @@
 
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         
-        /* Card de Informações do Trabalho */
-        .card-info { background: var(--branco); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; border-left: 6px solid var(--azul); }
-        .titulo-trabalho { color: var(--azul); margin: 0; font-size: 1.5rem; line-height: 1.3; }
-        .subtitulo-trabalho { margin: 10px 0 0 0; color: #666; font-size: 0.95rem; }
+        /* Card de Informações */
+        .card-info { background: var(--branco); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 6px solid var(--azul); }
+        .titulo-principal { color: var(--azul); margin: 0; font-size: 1.4rem; }
+        .subtitulo { margin: 5px 0 0 0; color: #666; font-size: 0.9rem; }
 
-        /* Área de Exibição (Iframe ou Tabela) */
-        #displayArea { min-height: 75vh; background: #e0e0e0; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* Área de Exibição Principal */
+        #displayArea { min-height: 75vh; background: #e0e0e0; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
         iframe { width: 100%; height: 75vh; border: none; background: white; }
 
-        /* Estilos da Tabela do Administrador */
-        .table-container { overflow-x: auto; width: 100%; height: 75vh; background: white; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: var(--azul); color: white; padding: 15px; text-align: left; position: sticky; top: 0; font-size: 0.9rem; }
-        td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 0.85rem; color: #333; }
-        tr:hover { background-color: #f9f9f9; }
-        
-        .status-ok { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 4px 8px; border-radius: 4px; }
-        .status-pendente { color: #d32f2f; font-weight: bold; background: #ffebee; padding: 4px 8px; border-radius: 4px; }
-        
-        .btn-gestao { text-decoration: none; color: var(--azul); font-weight: bold; border: 1px solid var(--azul); padding: 4px 8px; border-radius: 4px; transition: 0.2s; }
-        .btn-gestao:hover { background: var(--azul); color: white; }
+        /* Estilos da Tabela Admin e Busca */
+        .busca-box { margin-bottom: 15px; }
+        #inputBusca { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
+        #inputBusca:focus { border-color: var(--azul); }
 
-        .btn-sair { background: #d32f2f; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-sair:hover { background: #b71c1c; }
+        .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th { background: var(--azul); color: white; padding: 15px; text-align: left; position: sticky; top: 0; font-size: 0.9rem; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        tr:hover { background-color: #f9f9f9; }
+
+        .status-ok { color: var(--verde); font-weight: bold; }
+        .status-pendente { color: var(--vermelho); font-weight: bold; }
+        
+        .btn-upload { text-decoration: none; color: var(--azul); font-weight: bold; border: 1px solid var(--azul); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; transition: 0.2s; }
+        .btn-upload:hover { background: var(--azul); color: white; }
+
+        .btn-sair { background: var(--vermelho); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <header>
     <img src="logo.png" alt="ABEFACO" style="height: 45px;">
-    <div id="labelUsuario" style="font-weight: 600; color: var(--azul); font-size: 0.9rem;"></div>
-    <button class="btn-sair" onclick="sair()">Sair do Sistema</button>
+    <div id="identificacao" style="font-weight: bold; color: var(--azul);"></div>
+    <button class="btn-sair" onclick="sair()">Sair</button>
 </header>
 
 <div class="container">
-    <div class="card-info" id="cardDados">
-        <h2 id="txtTitulo" class="titulo-trabalho">A carregar dados...</h2>
-        <p id="txtSubtitulo" class="subtitulo-trabalho"></p>
+    <div class="card-info">
+        <h2 id="txtTitulo" class="titulo-principal">Carregando dados...</h2>
+        <p id="txtSubtitulo" class="subtitulo"></p>
     </div>
 
     <div id="displayArea">
-        <p>A processar informações do repositório...</p>
-    </div>
+        </div>
 </div>
 
 <script>
-    // 1. RECUPERAÇÃO DE DADOS DO LOCALSTORAGE
-    const dados = JSON.parse(localStorage.getItem('trabalhoAtivo'));
-
-    // Redireciona se não houver login ativo
-    if (!dados) { window.location.href = "index.html"; }
+    // 1. RECUPERA DADOS DA SESSÃO
+    const dadosAtivos = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    if (!dadosAtivos) { window.location.href = "index.html"; }
 
     const area = document.getElementById('displayArea');
     const txtTitulo = document.getElementById('txtTitulo');
     const txtSubtitulo = document.getElementById('txtSubtitulo');
-    const labelUsuario = document.getElementById('labelUsuario');
+    const identificacao = document.getElementById('identificacao');
 
-    // 2. LOGICA DE RENDERIZAÇÃO
-    if (dados.Número === "ADMIN") {
-        labelUsuario.innerText = "SESSÃO: GESTOR ABEFACO";
+    // 2. LOGICA DE RENDERIZAÇÃO POR PERFIL
+    if (dadosAtivos.Número === "ADMIN") {
+        identificacao.innerText = "SESSÃO: ADMINISTRADOR";
         renderizarAdmin();
     } else {
-        labelUsuario.innerText = `SESSÃO: AUTOR (ID ${dados.Número})`;
+        identificacao.innerText = `ID TRABALHO: ${dadosAtivos.Número}`;
         renderizarAutor();
     }
 
-    // --- FUNÇÃO PARA O AUTOR (EXIBE PDF OU FORMULÁRIO) ---
+    // --- VISÃO DO AUTOR (VÊ PDF OU FORMULÁRIO) ---
     function renderizarAutor() {
-        txtTitulo.innerText = dados.Título;
-        txtSubtitulo.innerText = `Autores: ${dados.Autores} | Eixo: ${dados.Eixo || 'N/A'}`;
+        txtTitulo.innerText = dadosAtivos.Título;
+        txtSubtitulo.innerText = `Autores: ${dadosAtivos.Autores}`;
         
-        const urlPDF = `posters/${dados.Número}.pdf`;
+        const caminhoPDF = `posters/${dadosAtivos.Número}.pdf`;
 
-        // Verifica se o PDF já foi processado no GitHub
-        fetch(urlPDF, { method: 'HEAD' }).then(res => {
+        // Verifica se o arquivo já existe no repositório GitHub
+        fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
             if (res.ok) {
-                // PDF ENCONTRADO
-                area.innerHTML = `<iframe src="${urlPDF}#toolbar=0"></iframe>`;
+                // PDF EXISTE: Mostra o Visualizador
+                area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0"></iframe>`;
             } else {
-                // PDF NÃO ENCONTRADO: Mostra o Formulário com ID pré-preenchido
-                const entryID = "entry.1292953747"; 
-                const linkBase = "https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform";
-                const linkFinal = `${linkBase}?embedded=true&${entryID}=${dados.Número}`;
+                // PDF AUSENTE: Mostra o Forms com preenchimento automático do ID
+                const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${dadosAtivos.Número}`;
                 
                 area.innerHTML = `
-                    <div style="text-align:center; padding: 40px; background: #fffbe6; width: 100%; box-sizing: border-box;">
-                        <h3 style="color: #856404; margin-top: 0;">📄 Arquivo em Processamento</h3>
-                        <p style="color: #666; margin-bottom: 25px;">Seu poster ainda não foi sincronizado com o portal. <br>
-                        Se ainda não realizou o envio, utilize o formulário oficial abaixo:</p>
+                    <div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%; box-sizing: border-box;">
+                        <h3 style="color: #856404; margin-top: 0;">⌛ Poster em Processamento</h3>
+                        <p style="color: #666; margin-bottom: 25px;">O seu arquivo PDF ainda não foi sincronizado com o portal. <br>
+                        <strong>Se você ainda não enviou</strong>, preencha o formulário abaixo:</p>
                         
-                        <iframe src="${linkFinal}" width="100%" height="800" frameborder="0" style="background: white; border-radius: 12px; border: 1px solid #ddd; max-width: 800px;">
-                            Carregando formulário...
-                        </iframe>
+                        <iframe src="${linkForms}" style="max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></iframe>
                     </div>`;
             }
         }).catch(() => {
-            area.innerHTML = "<p>Erro ao verificar o status do arquivo no servidor.</p>";
+            area.innerHTML = "<p style='padding:20px;'>Erro de conexão ao validar arquivo.</p>";
         });
     }
 
-    // --- FUNÇÃO PARA O ADMINISTRADOR (TABELA DE MONITORAMENTO) ---
+    // --- VISÃO DO ADMINISTRADOR (TABELA DE GESTÃO COM BUSCA) ---
     function renderizarAdmin() {
-        txtTitulo.innerText = "Painel de Controle de Submissões";
-        txtSubtitulo.innerText = "Monitoramento de integridade dos arquivos e links de gestão manual.";
+        txtTitulo.innerText = "Gestão de e-Posters ABEFACO";
+        txtSubtitulo.innerText = "Monitore submissões e realize uploads manuais para o GitHub.";
         
         Papa.parse("database.csv", {
             download: true,
@@ -137,34 +134,37 @@
             skipEmptyLines: true,
             complete: function(results) {
                 let html = `
+                    <div class="busca-box">
+                        <input type="text" id="inputBusca" onkeyup="filtrarTabela()" placeholder="🔍 Pesquisar por ID, Nome ou Título do trabalho...">
+                    </div>
                     <div class="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Título</th>
+                                <th>Título e Autores</th>
                                 <th>Status PDF</th>
-                                <th>Ações de Gestão</th>
+                                <th>Ação</th>
                             </tr>
                         </thead>
-                        <tbody>`;
+                        <tbody id="corpoTabela">`;
 
                 results.data.forEach(row => {
                     const id = String(row.Número).trim();
-                    if(!id || id === "" || id === "undefined") return;
+                    if(!id || id === "") return;
 
                     html += `
                         <tr>
                             <td><b>${id}</b></td>
-                            <td title="${row.Título}">${row.Título.substring(0, 65)}...</td>
-                            <td id="status-${id}">🔍 Verificando...</td>
+                            <td>${row.Título.substring(0, 60)}...<br><small style="color:#888">${row.Autores}</small></td>
+                            <td id="st-${id}">⌛ Verificando...</td>
                             <td>
-                                <a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-gestao">⬆️ Subir no GitHub</a>
+                                <a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">⬆️ Subir</a>
                             </td>
                         </tr>`;
                     
-                    // Dispara a verificação assíncrona de cada arquivo
-                    verificarStatusArquivo(id);
+                    // Validação assíncrona de status
+                    verificarArquivo(id);
                 });
 
                 html += "</tbody></table></div>";
@@ -173,16 +173,27 @@
         });
     }
 
-    // Verifica se o arquivo existe na pasta /posters
-    function verificarStatusArquivo(id) {
+    // Função que checa se o PDF está na pasta /posters
+    function verificarArquivo(id) {
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
-            const el = document.getElementById('status-' + id);
-            if (el) {
-                el.innerHTML = res.ok ? 
-                    '<span class="status-ok">✅ Disponível</span>' : 
+            const campo = document.getElementById('st-' + id);
+            if (campo) {
+                campo.innerHTML = res.ok ? 
+                    '<span class="status-ok">✅ No Ar</span>' : 
                     '<span class="status-pendente">❌ Pendente</span>';
             }
         });
+    }
+
+    // Lógica de Busca Instantânea
+    function filtrarTabela() {
+        const termo = document.getElementById("inputBusca").value.toLowerCase();
+        const linhas = document.getElementById("corpoTabela").getElementsByTagName("tr");
+        
+        for (let i = 0; i < linhas.length; i++) {
+            const textoLinha = linhas[i].innerText.toLowerCase();
+            linhas[i].style.display = textoLinha.includes(termo) ? "" : "none";
+        }
     }
 
     function sair() {
