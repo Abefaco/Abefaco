@@ -15,9 +15,10 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: var(--bg); 
             margin: 0; 
-            padding-top: var(--header-height); /* Espaço para o cabeçalho fixo */
+            padding-top: var(--header-height); 
         }
-        /* Cabeçalho Fixo com a Logo no Canto Superior Esquerdo */
+
+        /* Cabeçalho Fixo */
         header { 
             background: white; 
             color: var(--azul-abefaco); 
@@ -35,40 +36,63 @@
             box-sizing: border-box;
             border-bottom: 3px solid var(--azul-abefaco);
         }
-        .logo-area {
-            display: flex;
-            align-items: center;
-        }
-        .logo-interna { 
-            height: 60px; /* Altura controlada para caber no cabeçalho */
-            width: auto;
-            margin-right: 15px;
-        }
-        .app-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #333;
-        }
-        button#btnSair { 
+        .logo-area { display: flex; align-items: center; }
+        .logo-interna { height: 55px; width: auto; margin-right: 15px; }
+        .app-title { font-size: 16px; font-weight: 700; color: #333; text-transform: uppercase; }
+
+        .btn-sair { 
             background: transparent; 
-            border: 2px solid var(--azul-abefaco); 
-            color: var(--azul-abefaco); 
-            padding: 10px 20px; 
+            border: 2px solid #ff4444; 
+            color: #ff4444; 
+            padding: 8px 18px; 
             border-radius: 8px; 
             cursor: pointer; 
             font-weight: bold;
             transition: 0.3s;
         }
-        button#btnSair:hover { 
-            background: var(--azul-abefaco); 
-            color: white; 
+        .btn-sair:hover { background: #ff4444; color: white; }
+
+        /* Conteúdo */
+        .container { padding: 30px; max-width: 1100px; margin: 0 auto; }
+        .card-info { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            margin-bottom: 25px; 
+            border-left: 8px solid var(--dourado-abefaco);
         }
-        /* Conteúdo Principal */
-        .container { padding: 40px; max-width: 1200px; margin: 0 auto; }
-        .card { background: white; padding: 25px; border-radius: 12px; shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        .titulo-trabalho { font-size: 24px; font-weight: 800; color: var(--azul-abefaco); margin: 0; }
-        .visualizador-container { height: 75vh; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; background: #eee; }
+        .titulo-trabalho { font-size: 22px; font-weight: 800; color: var(--azul-abefaco); margin: 0 0 10px 0; line-height: 1.3; }
+        .autor-nome { color: #666; font-size: 15px; margin: 0; }
+
+        /* Área do PDF */
+        .poster-wrapper { 
+            background: #e9ecef; 
+            border-radius: 15px; 
+            height: 70vh; 
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            border: 2px dashed #ccc;
+        }
         iframe { width: 100%; height: 100%; border: none; }
+
+        /* Botão de Upload Customizado */
+        .upload-box { text-align: center; padding: 20px; }
+        .btn-upload {
+            display: inline-block;
+            background: var(--azul-abefaco);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(0,84,166,0.3);
+        }
+        .btn-upload:hover { background: var(--dourado-abefaco); transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -76,59 +100,73 @@
 <header>
     <div class="logo-area">
         <img src="logo.png" alt="Logo ABEFACO" class="logo-interna">
-        <span class="app-title">II Congresso Brasileiro | e-Poster</span>
+        <div class="app-title">II Congresso Brasileiro | Painel do Autor</div>
     </div>
-    <button id="btnSair" onclick="sair()">Sair</button>
+    <button class="btn-sair" onclick="sair()">Sair</button>
 </header>
 
 <div class="container">
-    <div class="card">
-        <h1 class="titulo-trabalho" id="trabalhoTitulo">Título do Trabalho</h1>
-        <p style="color: #666; margin-bottom: 0;">Autor(a): <span id="autorNome" style="font-weight:600; color:#333;">...</span></p>
+    <div class="card-info">
+        <h1 class="titulo-trabalho" id="txtTitulo">Carregando título...</h1>
+        <p class="autor-nome">ID do Trabalho: <span id="txtID" style="font-weight: bold; color: var(--azul-abefaco);">---</span></p>
     </div>
 
-    <div class="visualizador-container" id="posterArea">
-        </div>
+    <div class="poster-wrapper" id="displayArea">
+        <p style="color: #999;">Verificando arquivo PDF...</p>
+    </div>
 </div>
 
 <script>
-    // Recupera os dados salvos no login (se houver)
+    // 1. Recupera os dados salvos no login
     var dados = JSON.parse(localStorage.getItem('trabalhoAtivo'));
 
+    // 2. Segurança: se não logou, volta para o início
     if (!dados) {
-        // Se não houver dados, redireciona para o login por segurança
         window.location.href = "index.html";
     } else {
-        // Preenche o layout com as informações reais
-        document.getElementById('trabalhoTitulo').textContent = dados.Título;
-        
-        // Separa o primeiro autor (o Even3 envia uma lista separada por vírgula)
-        var primeiroAutor = dados.Autores.split(',')[0];
-        document.getElementById('autorNome').textContent = primeiroAutor;
+        // Preenche as informações na tela
+        document.getElementById('txtTitulo').innerText = dados.Título;
+        document.getElementById('txtID').innerText = dados.Número;
 
-        // Tenta carregar o PDF da pasta /posters com o número do trabalho
-        var pdfPath = 'posters/' + String(dados.Número).trim() + '.pdf';
-        
-        var viewerArea = document.getElementById('posterArea');
-        
-        // Usa o fetch para checar se o PDF existe antes de tentar carregar
-        fetch(pdfPath, { method: 'HEAD' }).then(function(res) {
-            if (res.ok) {
-                // Se existe, carrega no iframe
-                viewerArea.innerHTML = '<iframe src="' + pdfPath + '#toolbar=0" title="Visualizador do e-Poster"></iframe>';
+        // 3. Define o caminho do PDF (pasta posters/ID.pdf)
+        var caminhoPDF = 'posters/' + String(dados.Número).trim() + '.pdf';
+        var area = document.getElementById('displayArea');
+
+        // 4. Checa se o PDF existe no servidor (GitHub)
+        fetch(caminhoPDF, { method: 'HEAD' }).then(function(resposta) {
+            if (resposta.ok) {
+                // PDF ENCONTRADO: Exibe no Iframe
+                area.innerHTML = '<iframe src="' + caminhoPDF + '#toolbar=0"></iframe>';
+                area.style.border = "none";
             } else {
-                // Se não existe, mostra mensagem amigável
-                viewerArea.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; font-size:18px; color:#555; text-align:center; padding:20px;">' +
-                                      'PDF do e-Poster ainda não disponível para este trabalho.<br><br>Por favor, aguarde a publicação oficial.</div>';
+                // PDF NÃO ENCONTRADO: Exibe opção de Upload
+                area.innerHTML = `
+                    <div class="upload-box">
+                        <img src="logo.png" style="width:70px; opacity:0.3; margin-bottom:15px;">
+                        <h2 style="color:#555; margin:0;">Arquivo não disponível</h2>
+                        <p style="color:#777; margin:10px 0;">O e-Poster para este trabalho ainda não foi enviado ou processado.</p>
+                        
+                        <a href="COLOQUE_AQUI_O_LINK_DO_SEU_GOOGLE_FORM" target="_blank" class="btn-upload">
+                            📤 ENVIAR MEU PDF AGORA
+                        </a>
+                        
+                        <p style="font-size:12px; color:#aaa; margin-top:15px;">
+                            Dica: O arquivo deve ser nomeado como <strong>${dados.Número}.pdf</strong>
+                        </p>
+                    </div>
+                `;
             }
+        }).catch(function() {
+            area.innerHTML = "<p>Erro ao verificar base de arquivos.</p>";
         });
     }
 
+    // Função para encerrar sessão
     function sair() {
-        // Limpa a sessão e volta ao login
         localStorage.removeItem('trabalhoAtivo');
         window.location.href = "index.html";
     }
 </script>
+
 </body>
 </html>
