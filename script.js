@@ -1,38 +1,45 @@
 function autenticar() {
-    const emailInput = document.getElementById('email').value.trim().toLowerCase();
-    const codigoInput = document.getElementById('codigo').value.trim();
-    const mensagem = document.getElementById('mensagem');
+    var emailInput = document.getElementById('email').value.trim().toLowerCase();
+    var codigoInput = document.getElementById('codigo').value.trim();
+    var mensagem = document.getElementById('mensagem');
 
-    mensagem.innerHTML = "Carregando banco de dados...";
+    if (!emailInput || !codigoInput) {
+        mensagem.innerHTML = "Preencha todos os campos.";
+        return;
+    }
 
-    // Lendo o arquivo CSV que você subiu no GitHub
+    mensagem.innerHTML = "Verificando...";
+
     Papa.parse("database.csv", {
         download: true,
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-            const dados = results.data;
-            
-            // Procura o trabalho pelo "Número"
-            const trabalho = dados.find(t => t.Número === codigoInput);
+            var dados = results.data;
+            var trabalhoEncontrado = null;
 
-            if (trabalho) {
-                // Verifica se o email está na lista de emails (separados por vírgula no Even3)
-                const emailsNoBanco = trabalho.Emails.toLowerCase();
-                
-                if (emailsNoBanco.includes(emailInput)) {
-                    // Se for sucesso, salva os dados na sessão e vai para o painel
-                    localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
+            // Busca manual para evitar erros de funÃ§Ãµes modernas
+            for (var i = 0; i < dados.length; i++) {
+                if (String(dados[i].NÃºmero).trim() === codigoInput) {
+                    trabalhoEncontrado = dados[i];
+                    break;
+                }
+            }
+
+            if (trabalhoEncontrado) {
+                var emailsValidos = trabalhoEncontrado.Emails ? trabalhoEncontrado.Emails.toLowerCase() : "";
+                if (emailsValidos.indexOf(emailInput) !== -1) {
+                    localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalhoEncontrado));
                     window.location.href = "dashboard.html";
                 } else {
-                    mensagem.innerHTML = "<span style='color:red;'>E-mail não autorizado para este código.</span>";
+                    mensagem.innerHTML = "E-mail nÃ£o autorizado.";
                 }
             } else {
-                mensagem.innerHTML = "<span style='color:red;'>Código de trabalho não encontrado.</span>";
+                mensagem.innerHTML = "CÃ³digo nÃ£o encontrado.";
             }
         },
         error: function() {
-            mensagem.innerHTML = "<span style='color:red;'>Erro ao ler o banco de dados. Verifique o arquivo CSV.</span>";
+            mensagem.innerHTML = "Erro ao carregar database.csv";
         }
     });
 }
