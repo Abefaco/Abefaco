@@ -3,165 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel do Autor - ABEFACO</title>
+    <title>Sistema de Gestão de e-Posters - ABEFACO</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root {
-            --azul-abefaco: #0054A6;
-            --dourado-abefaco: #F9A825;
-            --bg: #f4f7f6;
-            --header-height: 80px;
+            --azul: #0054A6;
+            --dourado: #F9A825;
+            --cinza: #f4f7f6;
         }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: var(--bg); 
-            margin: 0; 
-            padding-top: var(--header-height); 
-        }
-
-        /* Cabeçalho Fixo */
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--cinza); padding-top: 70px; }
+        
+        /* Header */
         header { 
-            background: white; 
-            color: var(--azul-abefaco); 
-            padding: 0 30px; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: var(--header-height);
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
-            z-index: 1000;
-            box-sizing: border-box;
-            border-bottom: 3px solid var(--azul-abefaco);
+            background: white; padding: 0 20px; height: 70px;
+            position: fixed; top: 0; width: 100%; box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000;
+            border-bottom: 3px solid var(--azul);
         }
-        .logo-area { display: flex; align-items: center; }
-        .logo-interna { height: 55px; width: auto; margin-right: 15px; }
-        .app-title { font-size: 16px; font-weight: 700; color: #333; text-transform: uppercase; }
+        .logo-img { height: 45px; }
 
-        .btn-sair { 
-            background: transparent; 
-            border: 2px solid #ff4444; 
-            color: #ff4444; 
-            padding: 8px 18px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        .btn-sair:hover { background: #ff4444; color: white; }
+        /* Container Principal */
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        
+        /* Cards de Informação */
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .titulo-trabalho { color: var(--azul); margin: 0; font-size: 1.4rem; }
 
-        /* Conteúdo */
-        .container { padding: 30px; max-width: 1100px; margin: 0 auto; }
-        .card-info { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 15px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-            margin-bottom: 25px; 
-            border-left: 8px solid var(--dourado-abefaco);
-        }
-        .titulo-trabalho { font-size: 22px; font-weight: 800; color: var(--azul-abefaco); margin: 0 0 10px 0; line-height: 1.3; }
-        .autor-nome { color: #666; font-size: 15px; margin: 0; }
-
-        /* Área do PDF */
-        .poster-wrapper { 
-            background: #e9ecef; 
-            border-radius: 15px; 
-            height: 70vh; 
-            overflow: hidden; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            border: 2px dashed #ccc;
-        }
+        /* Área de Visualização do PDF */
+        #displayArea { height: 75vh; background: #ddd; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         iframe { width: 100%; height: 100%; border: none; }
 
-        /* Botão de Upload Customizado */
-        .upload-box { text-align: center; padding: 20px; }
-        .btn-upload {
-            display: inline-block;
-            background: var(--azul-abefaco);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 20px;
-            transition: 0.3s;
-            box-shadow: 0 4px 12px rgba(0,84,166,0.3);
-        }
-        .btn-upload:hover { background: var(--dourado-abefaco); transform: scale(1.05); }
+        /* Tabela do Administrador */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th { background: var(--azul); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:hover { background: #f9f9f9; }
+        .status-ok { color: green; font-weight: bold; }
+        .status-erro { color: red; font-weight: bold; }
+
+        /* Botões */
+        .btn-sair { background: #ff4444; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-upload { background: var(--azul); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="logo-area">
-        <img src="logo.png" alt="Logo ABEFACO" class="logo-interna">
-        <div class="app-title">II Congresso Brasileiro | Painel do Autor</div>
-    </div>
+    <img src="logo.png" alt="ABEFACO" class="logo-img">
+    <div id="infoAdmin" style="font-weight: bold; color: var(--azul);"></div>
     <button class="btn-sair" onclick="sair()">Sair</button>
 </header>
 
 <div class="container">
-    <div class="card-info">
-        <h1 class="titulo-trabalho" id="txtTitulo">Carregando título...</h1>
-        <p class="autor-nome">ID do Trabalho: <span id="txtID" style="font-weight: bold; color: var(--azul-abefaco);">---</span></p>
+    <div class="card" id="cardInfo">
+        <h2 id="txtTitulo" class="titulo-trabalho">A carregar...</h2>
+        <p id="txtSubtitulo" style="color: #666; margin: 5px 0;"></p>
     </div>
 
-    <div class="poster-wrapper" id="displayArea">
-        <p style="color: #999;">Verificando arquivo PDF...</p>
+    <div id="displayArea">
+        <p>A processar dados...</p>
     </div>
 </div>
 
 <script>
-    // 1. Recupera os dados salvos no login
-    var dados = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    // 1. Recuperar dados do login
+    const dados = JSON.parse(localStorage.getItem('trabalhoAtivo'));
 
-    // 2. Segurança: se não logou, volta para o início
     if (!dados) {
         window.location.href = "index.html";
+    }
+
+    const area = document.getElementById('displayArea');
+    const txtTitulo = document.getElementById('txtTitulo');
+    const txtSubtitulo = document.getElementById('txtSubtitulo');
+
+    // 2. Lógica de Decisão: ADMIN vs AUTOR
+    if (dados.Número === "ADMIN") {
+        renderizarPainelAdmin();
     } else {
-        // Preenche as informações na tela
-        document.getElementById('txtTitulo').innerText = dados.Título;
-        document.getElementById('txtID').innerText = dados.Número;
+        renderizarPainelAutor();
+    }
 
-        // 3. Define o caminho do PDF (pasta posters/ID.pdf)
-        var caminhoPDF = 'posters/' + String(dados.Número).trim() + '.pdf';
-        var area = document.getElementById('displayArea');
+    // --- FUNÇÃO PARA O AUTOR COMUM ---
+    function renderizarPainelAutor() {
+        txtTitulo.innerText = dados.Título;
+        txtSubtitulo.innerText = "ID do Trabalho: " + dados.Número + " | Autor: " + dados.Autores;
+        
+        const caminhoPDF = 'posters/' + String(dados.Número).trim() + '.pdf';
 
-        // 4. Checa se o PDF existe no servidor (GitHub)
-        fetch(caminhoPDF, { method: 'HEAD' }).then(function(resposta) {
-            if (resposta.ok) {
-                // PDF ENCONTRADO: Exibe no Iframe
-                area.innerHTML = '<iframe src="' + caminhoPDF + '#toolbar=0"></iframe>';
-                area.style.border = "none";
+        fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
+            if (res.ok) {
+                area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0"></iframe>`;
             } else {
-                // PDF NÃO ENCONTRADO: Exibe opção de Upload
                 area.innerHTML = `
-                    <div class="upload-box">
-                        <img src="logo.png" style="width:70px; opacity:0.3; margin-bottom:15px;">
-                        <h2 style="color:#555; margin:0;">Arquivo não disponível</h2>
-                        <p style="color:#777; margin:10px 0;">O e-Poster para este trabalho ainda não foi enviado ou processado.</p>
-                        
-                        <a href="https://forms.gle/oohhs5GEgpzv3bDV9" target="_blank" class="btn-upload">
-                            📤 ENVIAR MEU PDF AGORA
-                        </a>
-                        
-                        <p style="font-size:12px; color:#aaa; margin-top:15px;">
-                            Dica: O arquivo deve ser nomeado como <strong>${dados.Número}.pdf</strong>
-                        </p>
-                    </div>
-                `;
+                    <div style="text-align:center; padding: 40px;">
+                        <h3>PDF não encontrado</h3>
+                        <p>O seu trabalho ainda não foi processado ou o ficheiro não foi submetido.</p>
+                        <a href="LINK_DO_SEU_GOOGLE_FORM" target="_blank" class="btn-upload">📤 Submeter PDF Manualmente</a>
+                    </div>`;
             }
-        }).catch(function() {
-            area.innerHTML = "<p>Erro ao verificar base de arquivos.</p>";
         });
     }
 
-    // Função para encerrar sessão
+    // --- FUNÇÃO PARA O ADMINISTRADOR (PROCESSAMENTO DE DADOS) ---
+    function renderizarPainelAdmin() {
+        txtTitulo.innerText = "Gestão de Submissões - ABEFACO";
+        txtSubtitulo.innerText = "Modo Administrador: Monitorização em Tempo Real";
+        
+        Papa.parse("database.csv", {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                let html = `
+                    <div style="overflow-x:auto; width:100%; height:100%;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Status PDF</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                results.data.forEach(row => {
+                    const id = String(row.Número).trim();
+                    if(!id || id === "undefined") return;
+
+                    html += `
+                        <tr>
+                            <td><b>${id}</b></td>
+                            <td title="${row.Título}">${row.Título.substring(0, 70)}...</td>
+                            <td id="status-${id}">🔍 A verificar...</td>
+                            <td><a href="posters/${id}.pdf" target="_blank">Ver</a></td>
+                        </tr>`;
+                    
+                    // Verificação assíncrona de existência do ficheiro
+                    verificarFicheiro(id);
+                });
+
+                html += `</tbody></table></div>`;
+                area.innerHTML = html;
+            }
+        });
+    }
+
+    function verificarFicheiro(id) {
+        fetch('posters/' + id + '.pdf', { method: 'HEAD' }).then(res => {
+            const el = document.getElementById('status-' + id);
+            if (el) {
+                el.innerHTML = res.ok ? 
+                    '<span class="status-ok">✅ Disponível</span>' : 
+                    '<span class="status-erro">❌ Pendente</span>';
+            }
+        });
+    }
+
     function sair() {
         localStorage.removeItem('trabalhoAtivo');
         window.location.href = "index.html";
