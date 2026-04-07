@@ -3,105 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Área do Autor - ABEFACO</title>
+    <title>Acesso e-Posters - ABEFACO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root {
-            --azul-abefaco: #0054A6;
-            --dourado-abefaco: #F9A825; /* Baseado nas folhas da logo */
-            --bg: #f4f7f6;
+            --azul: #0054A6;
+            --fundo: #f4f7f6;
+            --branco: #ffffff;
         }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: var(--bg); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--fundo);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
-        .login-card { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 20px; 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.1); 
-            width: 100%; 
-            max-width: 400px; 
+
+        .login-card {
+            background: var(--branco);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
             text-align: center;
-            border-top: 12px solid var(--azul-abefaco);
-            border-bottom: 4px solid var(--dourado-abefaco); /* Adiciona um toque dourado */
+            border-top: 5px solid var(--azul);
         }
-        .logo-login {
-            max-width: 180px;
-            height: auto;
-            margin-bottom: 25px;
+
+        .logo {
+            height: 60px;
+            margin-bottom: 20px;
         }
-        .form-group { text-align: left; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #555; font-weight: 600; font-size: 14px; }
-        input { 
-            width: 100%; 
-            padding: 15px; 
-            border: 2px solid #e1e1e1; 
-            border-radius: 10px; 
-            box-sizing: border-box; 
+
+        h2 { color: var(--azul); margin-bottom: 10px; font-size: 1.4rem; }
+        p { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
+
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #333; font-weight: 600; font-size: 0.85rem; }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
             transition: 0.3s;
-            font-size: 16px;
         }
-        input:focus { 
-            border-color: var(--azul-abefaco); 
-            outline: none; 
-            box-shadow: 0 0 10px rgba(0,84,166,0.15); 
-        }
-        button { 
-            width: 100%; 
-            padding: 16px; 
-            background: var(--azul-abefaco); /* Mudado para azul, cor principal da logo */
-            color: white; 
-            border: none; 
-            border-radius: 10px; 
-            font-weight: bold; 
-            font-size: 17px;
-            cursor: pointer; 
+
+        input:focus { border-color: var(--azul); outline: none; }
+
+        button {
+            width: 100%;
+            background-color: var(--azul);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
             transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover { background-color: #003d7a; }
+
+        #mensagem {
             margin-top: 15px;
+            font-size: 0.85rem;
+            min-height: 20px;
         }
-        button:hover { 
-            background: #003d7a; 
-            transform: translateY(-2px); 
+
+        .footer-info {
+            margin-top: 25px;
+            font-size: 0.75rem;
+            color: #999;
         }
-        #mensagem { 
-            margin-top: 25px; 
-            min-height: 20px; 
-            font-size: 14px;
-            font-weight: 500; 
-        }
-        .footer-text { margin-top: 35px; font-size: 12px; color: #999; }
     </style>
 </head>
 <body>
 
 <div class="login-card">
-    <img src="logo.png" alt="Logo ABEFACO" class="logo-login">
-    
-    <h2 style="color: var(--azul-abefaco); margin-bottom: 25px; font-weight: 800;">Acesso ao e-Poster</h2>
-    
-    <div class="form-group">
-        <label>E-mail (usado no Even3)</label>
-        <input type="email" id="email" placeholder="digite@seu.email" required>
+    <img src="logo.png" alt="ABEFACO" class="logo">
+    <h2>Portal de e-Posters</h2>
+    <p>Insira suas credenciais para visualizar ou enviar seu trabalho.</p>
+
+    <div class="input-group">
+        <label for="email">E-mail Cadastrado</label>
+        <input type="email" id="email" placeholder="exemplo@email.com" required>
     </div>
-    <div class="form-group">
-        <label>Código do Trabalho (Número)</label>
-        <input type="text" id="codigo" placeholder="Digite o número" required>
+
+    <div class="input-group">
+        <label for="codigo">Código do Trabalho (ID)</label>
+        <input type="text" id="codigo" placeholder="Digite o ID numérico" required>
     </div>
-    
-    <button id="btnAcessar">Acessar Painel do Autor</button>
+
+    <button id="btnAcessar">Acessar Painel</button>
+
     <div id="mensagem"></div>
 
-    <div class="footer-text">
+    <div class="footer-info">
         II Congresso Brasileiro de Enfermagem de Família e Comunidade
     </div>
 </div>
 
-<script src="script.js"></script>
+<script>
+    document.getElementById('btnAcessar').onclick = function() {
+        const emailUser = document.getElementById('email').value.trim().toLowerCase();
+        const codUser = document.getElementById('codigo').value.trim();
+        const msg = document.getElementById('mensagem');
+
+        if (!emailUser || !codUser) {
+            msg.innerHTML = "<span style='color:orange;'>⚠️ Por favor, preencha todos os campos.</span>";
+            return;
+        }
+
+        // --- 1. VALIDAÇÃO DO ADMINISTRADOR ---
+        if (emailUser === "abefaco@gmail.com" && codUser === "092026") {
+            localStorage.setItem('trabalhoAtivo', JSON.stringify({
+                Número: "ADMIN",
+                Título: "PAINEL ADMINISTRATIVO",
+                Autores: "Gestão ABEFACO"
+            }));
+            window.location.href = "dashboard.html";
+            return;
+        }
+
+        // --- 2. VALIDAÇÃO DO USUÁRIO VIA CSV ---
+        msg.innerHTML = "⌛ Validando dados...";
+        
+        Papa.parse("database.csv", {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                // Procura o trabalho pelo código ID
+                const trabalho = results.data.find(t => String(t.Número).trim() === codUser);
+
+                if (trabalho) {
+                    // Normaliza os e-mails para comparação (converte para minúsculo e remove espaços)
+                    const emailsNoCSV = trabalho.Emails ? trabalho.Emails.toLowerCase() : "";
+                    
+                    if (emailsNoCSV.includes(emailUser)) {
+                        // Sucesso: Salva os dados na sessão e redireciona
+                        localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
+                        window.location.href = "dashboard.html";
+                    } else {
+                        msg.innerHTML = "<span style='color:red;'>❌ E-mail não autorizado para este código.</span>";
+                    }
+                } else {
+                    msg.innerHTML = "<span style='color:red;'>❌ Código de trabalho não encontrado.</span>";
+                }
+            },
+            error: function() {
+                msg.innerHTML = "<span style='color:red;'>❌ Erro ao carregar banco de dados. Verifique o arquivo CSV.</span>";
+            }
+        });
+    };
+
+    // Permite apertar "Enter" para entrar
+    document.addEventListener('keypress', function(e) {
+        if(e.key === 'Enter') document.getElementById('btnAcessar').click();
+    });
+</script>
+
 </body>
 </html>
