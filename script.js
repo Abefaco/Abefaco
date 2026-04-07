@@ -1,50 +1,71 @@
 window.onload = function() {
-    var btn = document.getElementById('btnAcessar');
+    const btn = document.getElementById('btnAcessar');
     
     if (btn) {
         btn.onclick = function() {
-            var emailUser = document.getElementById('email').value.trim().toLowerCase();
-            var codUser = document.getElementById('codigo').value.trim();
-            var msg = document.getElementById('mensagem');
+            const emailUser = document.getElementById('email').value.trim().toLowerCase();
+            const codUser = document.getElementById('codigo').value.trim();
+            const msg = document.getElementById('mensagem');
 
+            // Validação básica de campos vazios
             if (!emailUser || !codUser) {
-                msg.innerHTML = "<span style='color:orange;'>Preencha os campos.</span>";
+                msg.innerHTML = "<span style='color:orange;'>Por favor, preencha todos os campos.</span>";
                 return;
             }
 
-            msg.innerHTML = "<span style='color:blue;'>Validando acesso...</span>";
+            msg.innerHTML = "<span style='color:blue;'>A validar acesso...</span>";
 
+            // 1. LÓGICA DE ADMINISTRADOR (EXCEÇÃO DE FLUXO)
+            // Este bloco ignora o CSV e dá acesso direto ao painel de gestão
+            if (emailUser === "abefaco@gmail.com" && codUser === "092026") {
+                const dadosAdmin = {
+                    Número: "ADMIN",
+                    Título: "PAINEL DE CONTROLE ADMINISTRATIVO",
+                    Autores: "Gestão ABEFACO"
+                };
+                localStorage.setItem('trabalhoAtivo', JSON.stringify(dadosAdmin));
+                window.location.href = "dashboard.html";
+                return;
+            }
+
+            // 2. LÓGICA DE AUTOR COMUM (PROCESSAMENTO DO DATABASE.CSV)
             Papa.parse("database.csv", {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
-                dynamicTyping: true, // Ajuda a ler números corretamente
-                complete: function(res) {
-                    var lista = res.data;
-                    var encontrado = null;
+                dynamicTyping: false, // Mantemos como string para não perder zeros à esquerda em IDs
+                complete: function(results) {
+                    const listaTrabalhos = results.data;
+                    let trabalhoEncontrado = null;
 
-                    for (var i = 0; i < lista.length; i++) {
-                        // Compara o código ignorando espaços
-                        if (String(lista[i].Número).trim() === codUser) {
-                            encontrado = lista[i];
+                    // Procura o trabalho pelo Número (ID)
+                    for (let i = 0; i < listaTrabalhos.length; i++) {
+                        let idBanco = String(listaTrabalhos[i].Número).trim();
+                        if (idBanco === codUser) {
+                            trabalhoEncontrado = listaTrabalhos[i];
                             break;
                         }
                     }
 
-                    if (encontrado) {
-                        var emailsBanco = encontrado.Emails ? encontrado.Emails.toLowerCase() : "";
-                        if (emailsBanco.indexOf(emailUser) !== -1) {
-                            localStorage.setItem('trabalhoAtivo', JSON.stringify(encontrado));
+                    if (trabalhoEncontrado) {
+                        // Verifica se o e-mail digitado consta na coluna de e-mails do trabalho
+                        // Usamos .includes para suportar casos com múltiplos e-mails na mesma célula
+                        let emailsNoBanco = trabalhoEncontrado.Emails ? trabalhoEncontrado.Emails.toLowerCase() : "";
+                        
+                        if (emailsNoBanco.includes(emailUser)) {
+                            // Salva os dados no navegador para usar no Dashboard
+                            localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalhoEncontrado));
                             window.location.href = "dashboard.html";
                         } else {
-                            msg.innerHTML = "<span style='color:red;'>E-mail não autorizado para este trabalho.</span>";
+                            msg.innerHTML = "<span style='color:red;'>E-mail não autorizado para este código de trabalho.</span>";
                         }
                     } else {
-                        msg.innerHTML = "<span style='color:red;'>Código não encontrado.</span>";
+                        msg.innerHTML = "<span style='color:red;'>Código de trabalho não encontrado na base de dados.</span>";
                     }
                 },
-                error: function() {
-                    msg.innerHTML = "<span style='color:red;'>Erro ao carregar o arquivo database.csv.</span>";
+                error: function(err) {
+                    console.error("Erro ao processar CSV:", err);
+                    msg.innerHTML = "<span style='color:red;'>Erro ao carregar a base de dados. Verifique o ficheiro database.csv.</span>";
                 }
             });
         };
