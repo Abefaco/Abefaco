@@ -3,40 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de e-Posters - ABEFACO</title>
+    <title>√Årea do Autor - ABEFACO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root {
-            --azul: #0054A6; --verde: #4FB848; --laranja: #F9A825; --cinza: #f4f7f6;
+            --azul-abefaco: #0054A6;
+            --dourado-abefaco: #F9A825; /* Baseado nas folhas da logo */
+            --bg: #f4f7f6;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--cinza); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .login-card { background: white; padding: 2rem; border-radius: 12px; shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; border-top: 8px solid var(--azul); }
-        .logo { text-align: center; color: var(--azul); font-weight: bold; font-size: 24px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #666; font-size: 14px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: var(--verde); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #3e9139; }
-        #mensagem { margin-top: 15px; font-size: 13px; text-align: center; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+        }
+        .login-card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 400px; 
+            text-align: center;
+            border-top: 12px solid var(--azul-abefaco);
+            border-bottom: 4px solid var(--dourado-abefaco); /* Adiciona um toque dourado */
+        }
+        .logo-login {
+            max-width: 180px;
+            height: auto;
+            margin-bottom: 25px;
+        }
+        .form-group { text-align: left; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 600; font-size: 14px; }
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            border: 2px solid #e1e1e1; 
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            transition: 0.3s;
+            font-size: 16px;
+        }
+        input:focus { 
+            border-color: var(--azul-abefaco); 
+            outline: none; 
+            box-shadow: 0 0 10px rgba(0,84,166,0.15); 
+        }
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            background: var(--azul-abefaco); /* Mudado para azul, cor principal da logo */
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: bold; 
+            font-size: 17px;
+            cursor: pointer; 
+            transition: 0.3s;
+            margin-top: 15px;
+        }
+        button:hover { 
+            background: #003d7a; 
+            transform: translateY(-2px); 
+        }
+        #mensagem { 
+            margin-top: 25px; 
+            min-height: 20px; 
+            font-size: 14px;
+            font-weight: 500; 
+        }
+        .footer-text { margin-top: 35px; font-size: 12px; color: #999; }
     </style>
 </head>
 <body>
 
 <div class="login-card">
-    <div class="logo">ABEFACO</div>
-    <h2 style="text-align:center; color: var(--azul); font-size: 18px;">ValidaÁ„o de Trabalho</h2>
+    <img src="logo.png" alt="Logo ABEFACO" class="logo-login">
+    
+    <h2 style="color: var(--azul-abefaco); margin-bottom: 25px; font-weight: 800;">Acesso ao e-Poster</h2>
     
     <div class="form-group">
-        <label>E-mail do Autor</label>
-        <input type="email" id="email" placeholder="seu@email.com">
+        <label>E-mail (usado no Even3)</label>
+        <input type="email" id="email" placeholder="digite@seu.email" required>
     </div>
     <div class="form-group">
-        <label>CÛdigo do Trabalho (N˙mero)</label>
-        <input type="text" id="codigo" placeholder="Ex: 1417232">
+        <label>C√≥digo do Trabalho (N√∫mero)</label>
+        <input type="text" id="codigo" placeholder="Digite o n√∫mero" required>
     </div>
     
-    <button onclick="autenticar()">Acessar Trabalho</button>
+    <button id="btnAcessar">Acessar Painel do Autor</button>
     <div id="mensagem"></div>
+
+    <div class="footer-text">
+        II Congresso Brasileiro de Enfermagem de Fam√≠lia e Comunidade
+    </div>
 </div>
 
 <script src="script.js"></script>
