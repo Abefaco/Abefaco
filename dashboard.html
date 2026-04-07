@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do Trabalho - ABEFACO</title>
+    <style>
+        :root { --azul: #0054A6; --verde: #4FB848; --laranja: #F9A825; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { border-bottom: 4px solid var(--laranja); margin-bottom: 20px; }
+        .info-box { background: #eef2f7; padding: 15px; border-left: 5px solid var(--azul); margin-bottom: 20px; }
+        .pdf-viewer { width: 100%; height: 600px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .btn-voltar { text-decoration: none; color: var(--azul); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="index.html" class="btn-voltar">? Sair</a>
+        <h1 style="color: var(--azul);">Detalhes do Trabalho</h1>
+    </div>
+
+    <div id="conteudoTrabalho">
+        </div>
+
+    <div id="areaPoster" class="pdf-viewer">
+        Verificando e-Poster...
+    </div>
+</div>
+
+<script>
+    const trabalho = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+
+    if (!trabalho) {
+        window.location.href = "index.html";
+    }
+
+    document.getElementById('conteudoTrabalho').innerHTML = `
+        <div class="info-box">
+            <h3>${trabalho.Título}</h3>
+            <p><strong>ID:</strong> ${trabalho.Número}</p>
+            <p><strong>Área:</strong> ${trabalho['Área Temática']}</p>
+            <p><strong>Autores:</strong> ${trabalho.Autores}</p>
+        </div>
+    `;
+
+    // Lógica para verificar se o PDF existe na pasta /posters/
+    const urlPoster = `posters/${trabalho.Número}.pdf`;
+    
+    fetch(urlPoster).then(res => {
+        if (res.ok) {
+            document.getElementById('areaPoster').innerHTML = `<embed src="${urlPoster}" type="application/pdf" width="100%" height="100%" />`;
+        } else {
+            document.getElementById('areaPoster').innerHTML = `
+                <div>
+                    <p style="color:red;">PDF do e-Poster ainda não disponível.</p>
+                    <p>Por favor, envie o arquivo para a organização.</p>
+                </div>`;
+        }
+    });
+</script>
+</body>
+</html>
