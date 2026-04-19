@@ -10,6 +10,7 @@
             --azul: #0054A6;
             --fundo: #f4f7f6;
             --branco: #ffffff;
+            --cinza-claro: #e9ecef;
         }
 
         body {
@@ -18,8 +19,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
         }
 
         .login-card {
@@ -33,11 +35,7 @@
             border-top: 5px solid var(--azul);
         }
 
-        .logo {
-            height: 60px;
-            margin-bottom: 20px;
-        }
-
+        .logo { height: 60px; margin-bottom: 20px; }
         h2 { color: var(--azul); margin-bottom: 10px; font-size: 1.4rem; }
         p { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
 
@@ -53,7 +51,6 @@
             font-size: 1rem;
             transition: 0.3s;
         }
-
         input:focus { border-color: var(--azul); outline: none; }
 
         button {
@@ -69,8 +66,30 @@
             transition: 0.3s;
             margin-top: 10px;
         }
-
         button:hover { background-color: #003d7a; }
+
+        /* Estilo para a nova seção de apresentação */
+        .divider {
+            margin: 30px 0;
+            border-top: 1px solid #ddd;
+            position: relative;
+        }
+        .divider span {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--branco);
+            padding: 0 15px;
+            color: #999;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .btn-secundario {
+            background-color: #28a745; /* Verde para diferenciar */
+        }
+        .btn-secundario:hover { background-color: #1e7e34; }
 
         #mensagem {
             margin-top: 15px;
@@ -90,19 +109,26 @@
 <div class="login-card">
     <img src="logo.png" alt="ABEFACO" class="logo">
     <h2>Portal de e-Posters</h2>
-    <p>Insira suas credenciais para visualizar ou enviar seu trabalho.</p>
-
+    
+    <p>Acesso para Autores (E-mail + ID)</p>
     <div class="input-group">
         <label for="email">E-mail Cadastrado</label>
-        <input type="email" id="email" placeholder="exemplo@email.com" required>
+        <input type="email" id="email" placeholder="exemplo@email.com">
     </div>
-
     <div class="input-group">
         <label for="codigo">Código do Trabalho (ID)</label>
-        <input type="text" id="codigo" placeholder="Digite o ID numérico" required>
+        <input type="text" id="codigo" placeholder="Digite o ID numérico">
     </div>
-
     <button id="btnAcessar">Acessar Painel</button>
+
+    <div class="divider"><span>OU</span></div>
+
+    <p>Visualização Rápida (Apenas ID)</p>
+    <div class="input-group">
+        <label for="codigoApresentacao">Código para Apresentação</label>
+        <input type="text" id="codigoApresentacao" placeholder="Ex: 150">
+    </div>
+    <button id="btnApresentar" class="btn-secundario">Iniciar Apresentação</button>
 
     <div id="mensagem"></div>
 
@@ -112,62 +138,83 @@
 </div>
 
 <script>
+    const msg = document.getElementById('mensagem');
+
+    // --- FUNÇÃO DE LOGIN TRADICIONAL (E-MAIL + ID) ---
     document.getElementById('btnAcessar').onclick = function() {
         const emailUser = document.getElementById('email').value.trim().toLowerCase();
         const codUser = document.getElementById('codigo').value.trim();
-        const msg = document.getElementById('mensagem');
 
         if (!emailUser || !codUser) {
-            msg.innerHTML = "<span style='color:orange;'>⚠️ Por favor, preencha todos os campos.</span>";
+            msg.innerHTML = "<span style='color:orange;'>⚠️ Preencha e-mail e código.</span>";
             return;
         }
 
-        // --- 1. VALIDAÇÃO DO ADMINISTRADOR ---
+        // Validação Admin
         if (emailUser === "abefaco@gmail.com" && codUser === "092026") {
             localStorage.setItem('trabalhoAtivo', JSON.stringify({
-                Número: "ADMIN",
-                Título: "PAINEL ADMINISTRATIVO",
-                Autores: "Gestão ABEFACO"
+                Número: "ADMIN", Título: "PAINEL ADMINISTRATIVO", Autores: "Gestão ABEFACO"
             }));
             window.location.href = "dashboard.html";
             return;
         }
 
-        // --- 2. VALIDAÇÃO DO USUÁRIO VIA CSV ---
-        msg.innerHTML = "⌛ Validando dados...";
-        
+        msg.innerHTML = "⌛ Validando...";
         Papa.parse("database.csv", {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
+            download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
-                // Procura o trabalho pelo código ID
                 const trabalho = results.data.find(t => String(t.Número).trim() === codUser);
-
                 if (trabalho) {
-                    // Normaliza os e-mails para comparação (converte para minúsculo e remove espaços)
                     const emailsNoCSV = trabalho.Emails ? trabalho.Emails.toLowerCase() : "";
-                    
                     if (emailsNoCSV.includes(emailUser)) {
-                        // Sucesso: Salva os dados na sessão e redireciona
                         localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
                         window.location.href = "dashboard.html";
                     } else {
-                        msg.innerHTML = "<span style='color:red;'>❌ E-mail não autorizado para este código.</span>";
+                        msg.innerHTML = "<span style='color:red;'>❌ E-mail não autorizado.</span>";
                     }
                 } else {
-                    msg.innerHTML = "<span style='color:red;'>❌ Código de trabalho não encontrado.</span>";
+                    msg.innerHTML = "<span style='color:red;'>❌ Código não encontrado.</span>";
                 }
-            },
-            error: function() {
-                msg.innerHTML = "<span style='color:red;'>❌ Erro ao carregar banco de dados. Verifique o arquivo CSV.</span>";
             }
         });
     };
 
-    // Permite apertar "Enter" para entrar
+    // --- NOVA FUNÇÃO: MODO APRESENTAÇÃO (APENAS ID) ---
+    document.getElementById('btnApresentar').onclick = function() {
+        const codUser = document.getElementById('codigoApresentacao').value.trim();
+
+        if (!codUser) {
+            msg.innerHTML = "<span style='color:orange;'>⚠️ Digite o código do trabalho.</span>";
+            return;
+        }
+
+        msg.innerHTML = "⌛ Localizando trabalho...";
+        Papa.parse("database.csv", {
+            download: true, header: true, skipEmptyLines: true,
+            complete: function(results) {
+                const trabalho = results.data.find(t => String(t.Número).trim() === codUser);
+                
+                if (trabalho) {
+                    // Adiciona a marcação de modo apresentação
+                    trabalho.modoApresentacao = true; 
+                    localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
+                    window.location.href = "dashboard.html";
+                } else {
+                    msg.innerHTML = "<span style='color:red;'>❌ Código de apresentação não encontrado.</span>";
+                }
+            }
+        });
+    };
+
+    // Atalho tecla Enter (para o login comum)
     document.addEventListener('keypress', function(e) {
-        if(e.key === 'Enter') document.getElementById('btnAcessar').click();
+        if(e.key === 'Enter') {
+            if(document.activeElement.id === 'codigoApresentacao') {
+                document.getElementById('btnApresentar').click();
+            } else {
+                document.getElementById('btnAcessar').click();
+            }
+        }
     });
 </script>
 
