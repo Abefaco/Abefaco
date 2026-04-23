@@ -34,29 +34,20 @@
         #displayArea { min-height: 75vh; background: #e0e0e0; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
         iframe { width: 100%; height: 75vh; border: none; background: white; }
 
-        .busca-box { margin-bottom: 15px; }
-        #inputBusca { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
-        #inputBusca:focus { border-color: var(--azul); }
-
         .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; min-width: 700px; }
         th { background: var(--azul); color: white; padding: 15px; text-align: left; position: sticky; top: 0; font-size: 0.9rem; }
         td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
         tr:hover { background-color: #f9f9f9; }
 
-        .status-ok { color: var(--verde); font-weight: bold; }
-        .status-pendente { color: var(--vermelho); font-weight: bold; }
-        
-        .btn-upload { text-decoration: none; color: var(--azul); font-weight: bold; border: 1px solid var(--azul); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; transition: 0.2s; }
-        .btn-upload:hover { background: var(--azul); color: white; }
-
         .btn-sair { background: var(--vermelho); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-ranking { background: var(--azul); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px; }
         
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-content label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9rem; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow-y: auto; max-height: 90vh; }
+        .modal-content label { display: block; margin-top: 12px; font-weight: bold; font-size: 0.85rem; }
         .modal-content input[type="range"] { width: 100%; margin-top: 5px; }
+        .modal-content input[type="text"], .modal-content textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -90,50 +81,35 @@
     const identificacao = document.getElementById('identificacao');
 
     if (dadosAtivos.Número === "ADMIN") {
-        identificacao.innerText = "ADMINISTRADOR";
+        identificacao.innerText = "SESSÃO: ADMINISTRADOR";
         document.getElementById('btnRanking').style.display = 'inline-block';
         renderizarAdmin();
     } else {
-        identificacao.innerText = dadosAtivos.modoApresentacao ? "Apresentação" : `ID TRABALHO: ${dadosAtivos.Número}`;
+        identificacao.innerText = dadosAtivos.modoApresentacao ? "MODO APRESENTAÇÃO" : `ID TRABALHO: ${dadosAtivos.Número}`;
         renderizarAutor();
     }
 
     function renderizarAutor() {
         txtTitulo.innerText = dadosAtivos.Título;
         txtSubtitulo.innerText = `Autores: ${dadosAtivos.Autores}`;
-        const caminhoPDF = `posters/${dadosAtivos.Número}.pdf`;
-
-        fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
-            if (res.ok) {
-                area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0&navpanes=0"></iframe>`;
-            } else {
-                area.innerHTML = `<div style="text-align:center; padding: 50px;"><h2>PDF não localizado (${dadosAtivos.Número}).</h2></div>`;
-            }
-        });
+        area.innerHTML = `<iframe src="posters/${dadosAtivos.Número}.pdf#toolbar=0"></iframe>`;
     }
 
     function renderizarAdmin() {
         txtTitulo.innerText = "Gestão de e-Posters ABEFACO";
-        txtSubtitulo.innerText = "Monitore submissões e realize apresentações ou avaliações.";
+        txtSubtitulo.innerText = "Monitore submissões, realize apresentações ou avaliações.";
         
         Papa.parse("database.csv", {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
+            download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
                 let html = `
-                    <div class="busca-box">
-                        <input type="text" id="inputBusca" onkeyup="filtrarTabela()" placeholder="Pesquisar...">
+                    <div style="margin-bottom:15px;">
+                        <input type="text" id="inputBusca" onkeyup="filtrarTabela()" placeholder="Pesquisar por ID, Título ou Autor..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd;">
                     </div>
                     <div class="table-container">
                     <table>
                         <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Título e Autores</th>
-                                <th>Status PDF</th>
-                                <th>Ações</th>
-                            </tr>
+                            <tr><th>ID</th><th>Trabalho</th><th>Status</th><th>Ações</th></tr>
                         </thead>
                         <tbody id="corpoTabela"></tbody>
                     </table></div>`;
@@ -144,21 +120,10 @@
                 results.data.forEach(row => {
                     const id = String(row.Número).trim();
                     if(!id || id === "undefined") return;
-
                     bancoDeDadosLocal[id] = row;
-
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><b>${id}</b></td>
-                        <td>
-                            <div id="tit-${id}" style="font-weight:bold;"></div>
-                            <small id="aut-${id}" style="color:#888;"></small>
-                        </td>
-                        <td id="st-${id}">Verificando...</td>
-                        <td id="acoes-${id}"></td>
-                    `;
+                    tr.innerHTML = `<td><b>${id}</b></td><td><div id="tit-${id}" style="font-weight:bold;"></div><small id="aut-${id}" style="color:#888;"></small></td><td id="st-${id}">...</td><td id="acoes-${id}"></td>`;
                     tbody.appendChild(tr);
-
                     document.getElementById(`tit-${id}`).textContent = row.Título;
                     document.getElementById(`aut-${id}`).textContent = row.Autores;
                     verificarArquivo(id);
@@ -171,49 +136,52 @@
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
             const campoStatus = document.getElementById('st-' + id);
             const campoAcoes = document.getElementById('acoes-' + id);
-            if (!campoStatus || !campoAcoes) return;
-
             if (res.ok) {
-                campoStatus.innerHTML = '<span class="status-ok">No Ar</span>';
-                campoAcoes.innerHTML = `
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="iniciarApresentacaoAdmin('${id}')" style="background:#28a745; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:bold;">Play</button>
-                        <button onclick="abrirAvaliacao('${id}')" style="background:#0054A6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:bold;">Avaliar</button>
-                    </div>`;
+                campoStatus.innerHTML = '<span style="color:green; font-weight:bold;">No Ar</span>';
+                campoAcoes.innerHTML = `<div style="display:flex; gap:5px;">
+                    <button onclick="iniciarApresentacaoAdmin('${id}')" style="background:#28a745; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Play</button>
+                    <button onclick="abrirAvaliacao('${id}')" style="background:#0054A6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Avaliar</button>
+                </div>`;
             } else {
-                campoStatus.innerHTML = '<span class="status-pendente">Pendente</span>';
-                campoAcoes.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">Subir</a>`;
+                campoStatus.innerHTML = '<span style="color:red;">Pendente</span>';
+                campoAcoes.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" style="font-size:11px; color:#0054A6;">Subir</a>`;
             }
         });
     }
 
     function abrirAvaliacao(id) {
         const trab = bancoDeDadosLocal[id];
-        const notaExistente = JSON.parse(localStorage.getItem(`n-${id}`)) || {c1:5, c2:5, c3:5, c4:5};
+        const dados = JSON.parse(localStorage.getItem(`n-${id}`)) || {c1:5, c2:5, c3:5, c4:5, avaliador:"", obs:""};
         
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.id = 'modalAval';
         modal.innerHTML = `
             <div class="modal-content">
-                <h3>Avaliar ID: ${id}</h3>
-                <p style="font-size:0.8rem; color:#666;">${trab.Título}</p>
+                <h3>Avaliar Trabalho: ${id}</h3>
+                <p style="font-size:0.75rem; color:#666;">${trab.Título}</p>
                 <hr>
-                <label>Conteúdo (1-10): <span id="v1">${notaExistente.c1}</span></label>
-                <input type="range" id="c1" min="1" max="10" value="${notaExistente.c1}" oninput="document.getElementById('v1').innerText=this.value">
-                
-                <label>Metodologia (1-10): <span id="v2">${notaExistente.c2}</span></label>
-                <input type="range" id="c2" min="1" max="10" value="${notaExistente.c2}" oninput="document.getElementById('v2').innerText=this.value">
-                
-                <label>Visual (1-10): <span id="v3">${notaExistente.c3}</span></label>
-                <input type="range" id="c3" min="1" max="10" value="${notaExistente.c3}" oninput="document.getElementById('v3').innerText=this.value">
+                <label>Nome do Avaliador:</label>
+                <input type="text" id="nomeAvaliador" value="${dados.avaliador}" placeholder="Seu nome completo">
 
-                <label>Originalidade (1-10): <span id="v4">${notaExistente.c4}</span></label>
-                <input type="range" id="c4" min="1" max="10" value="${notaExistente.c4}" oninput="document.getElementById('v4').innerText=this.value">
+                <label>Conteúdo Científico (1-10): <span id="v1">${dados.c1}</span></label>
+                <input type="range" id="c1" min="1" max="10" value="${dados.c1}" oninput="document.getElementById('v1').innerText=this.value">
+                
+                <label>Metodologia (1-10): <span id="v2">${dados.c2}</span></label>
+                <input type="range" id="c2" min="1" max="10" value="${dados.c2}" oninput="document.getElementById('v2').innerText=this.value">
+                
+                <label>Apresentação Visual (1-10): <span id="v3">${dados.c3}</span></label>
+                <input type="range" id="c3" min="1" max="10" value="${dados.c3}" oninput="document.getElementById('v3').innerText=this.value">
+
+                <label>Originalidade (1-10): <span id="v4">${dados.c4}</span></label>
+                <input type="range" id="c4" min="1" max="10" value="${dados.c4}" oninput="document.getElementById('v4').innerText=this.value">
+
+                <label>Observações / Parecer:</label>
+                <textarea id="obs" rows="3" placeholder="Breve comentário sobre o trabalho">${dados.obs || ""}</textarea>
 
                 <div style="margin-top:20px; display:flex; gap:10px;">
-                    <button onclick="salvarNota('${id}')" style="flex:1; background:var(--verde); color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;">Salvar</button>
-                    <button onclick="document.getElementById('modalAval').remove()" style="flex:1; background:#ccc; border:none; padding:10px; border-radius:5px; cursor:pointer;">Cancelar</button>
+                    <button onclick="salvarNota('${id}')" style="flex:1; background:#2e7d32; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer; font-weight:bold;">Salvar e Ver Ranking</button>
+                    <button onclick="document.getElementById('modalAval').remove()" style="flex:1; background:#ccc; border:none; padding:12px; border-radius:5px; cursor:pointer;">Cancelar</button>
                 </div>
             </div>`;
         document.body.appendChild(modal);
@@ -221,15 +189,18 @@
 
     function salvarNota(id) {
         const n = {
+            avaliador: document.getElementById('nomeAvaliador').value.trim(),
             c1: parseInt(document.getElementById('c1').value),
             c2: parseInt(document.getElementById('c2').value),
             c3: parseInt(document.getElementById('c3').value),
-            c4: parseInt(document.getElementById('c4').value)
+            c4: parseInt(document.getElementById('c4').value),
+            obs: document.getElementById('obs').value.trim(),
+            media: 0
         };
         n.media = (n.c1 + n.c2 + n.c3 + n.c4) / 4;
         localStorage.setItem(`n-${id}`, JSON.stringify(n));
         document.getElementById('modalAval').remove();
-        alert("Avaliação salva!");
+        mostrarRanking();
     }
 
     function mostrarRanking() {
@@ -238,29 +209,36 @@
             if(k.startsWith('n-')) {
                 const id = k.replace('n-', '');
                 const d = JSON.parse(localStorage.getItem(k));
-                if(bancoDeDadosLocal[id]) lista.push({id, media: d.media, titulo: bancoDeDadosLocal[id].Título});
+                if(bancoDeDadosLocal[id]) lista.push({id, media: d.media, titulo: bancoDeDadosLocal[id].Título, avaliador: d.avaliador});
             }
         });
         lista.sort((a,b) => b.media - a.media);
         const top10 = lista.slice(0, 10);
 
         area.innerHTML = `
-            <div style="background:white; padding:20px; border-radius:12px;">
-                <h3>Top 10 - Melhores Avaliações</h3>
-                <canvas id="chartRanking" style="max-height:300px; margin-bottom:20px;"></canvas>
-                <table style="width:100%;">
-                    <thead><tr style="background:#eee;"><th>Pos</th><th>ID</th><th>Média</th><th>Ação</th></tr></thead>
-                    <tbody>
-                        ${top10.map((t, i) => `<tr><td>${i+1}º</td><td>${t.id}</td><td><b>${t.media.toFixed(2)}</b></td><td><button onclick="iniciarApresentacaoAdmin('${t.id}')" style="background:var(--azul); color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">Ver</button></td></tr>`).join('')}
-                    </tbody>
-                </table>
-                <button onclick="renderizarAdmin()" style="margin-top:20px; padding:10px; cursor:pointer;">Voltar à Gestão</button>
+            <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                <h3 style="color:var(--azul); margin-top:0;">Ranking Top 10 Melhores Trabalhos</h3>
+                <canvas id="chartRanking" style="max-height:300px; margin-bottom:25px;"></canvas>
+                <div class="table-container">
+                    <table>
+                        <thead><tr style="background:#f8f9fa;"><th>Pos</th><th>Trabalho (Título)</th><th>Média</th><th>Ação</th></tr></thead>
+                        <tbody>
+                            ${top10.map((t, i) => `<tr>
+                                <td style="text-align:center;"><b>${i+1}º</b></td>
+                                <td><div style="font-weight:bold; color:var(--azul);">${t.titulo}</div><small style="color:#666;">ID: ${t.id} | Avaliador: ${t.avaliador || 'N/A'}</small></td>
+                                <td style="text-align:center;"><b>${t.media.toFixed(2)}</b></td>
+                                <td style="text-align:center;"><button onclick="iniciarApresentacaoAdmin('${t.id}')" style="background:var(--azul); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Ver</button></td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="renderizarAdmin()" style="margin-top:20px; padding:12px 20px; background:#666; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Voltar à Gestão</button>
             </div>`;
         
         new Chart(document.getElementById('chartRanking'), {
             type: 'bar',
             data: {
-                labels: top10.map(t => t.id),
+                labels: top10.map(t => t.titulo.substring(0, 20) + "..."),
                 datasets: [{ label: 'Média Final', data: top10.map(t => t.media), backgroundColor: '#0054A6' }]
             },
             options: { responsive: true, scales: { y: { min: 0, max: 10 } } }
