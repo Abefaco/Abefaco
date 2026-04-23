@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de e-Posters - ABEFACO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --azul: #0054A6;
@@ -50,6 +51,12 @@
         .btn-upload:hover { background: var(--azul); color: white; }
 
         .btn-sair { background: var(--vermelho); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-ranking { background: var(--azul); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-content label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9rem; }
+        .modal-content input[type="range"] { width: 100%; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -57,7 +64,10 @@
 <header>
     <img src="logo.png" alt="ABEFACO" style="height: 45px;">
     <div id="identificacao" style="font-weight: bold; color: var(--azul);"></div>
-    <button class="btn-sair" onclick="sair()">Sair</button>
+    <div>
+        <button id="btnRanking" class="btn-ranking" style="display:none;" onclick="mostrarRanking()">Ranking Top 10</button>
+        <button class="btn-sair" onclick="sair()">Sair</button>
+    </div>
 </header>
 
 <div class="container">
@@ -65,7 +75,6 @@
         <h2 id="txtTitulo" class="titulo-principal">Carregando dados...</h2>
         <p id="txtSubtitulo" class="subtitulo"></p>
     </div>
-
     <div id="displayArea"></div>
 </div>
 
@@ -82,6 +91,7 @@
 
     if (dadosAtivos.Número === "ADMIN") {
         identificacao.innerText = "SESSÃO: ADMINISTRADOR";
+        document.getElementById('btnRanking').style.display = 'inline-block';
         renderizarAdmin();
     } else {
         identificacao.innerText = dadosAtivos.modoApresentacao ? "MODO APRESENTAÇÃO" : `ID TRABALHO: ${dadosAtivos.Número}`;
@@ -91,31 +101,20 @@
     function renderizarAutor() {
         txtTitulo.innerText = dadosAtivos.Título;
         txtSubtitulo.innerText = `Autores: ${dadosAtivos.Autores}`;
-        
         const caminhoPDF = `posters/${dadosAtivos.Número}.pdf`;
 
         fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
             if (res.ok) {
                 area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0&navpanes=0"></iframe>`;
             } else {
-                if (dadosAtivos.modoApresentacao) {
-                    area.innerHTML = `<div style="text-align:center; padding: 50px;"><h2>O PDF deste trabalho (${dadosAtivos.Número}) não foi localizado.</h2></div>`;
-                } else {
-                    const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${dadosAtivos.Número}`;
-                    area.innerHTML = `
-                        <div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%; box-sizing: border-box;">
-                            <h3 style="color: #856404; margin-top: 0;">Poster em Processamento</h3>
-                            <p style="color: #666; margin-bottom: 25px;">O arquivo PDF ainda não foi sincronizado.</p>
-                            <iframe src="${linkForms}" style="width: 100%; max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></iframe>
-                        </div>`;
-                }
+                area.innerHTML = `<div style="text-align:center; padding: 50px;"><h2>PDF não localizado (${dadosAtivos.Número}).</h2></div>`;
             }
         });
     }
 
     function renderizarAdmin() {
         txtTitulo.innerText = "Gestão de e-Posters ABEFACO";
-        txtSubtitulo.innerText = "Monitore submissões e realize apresentações ou uploads.";
+        txtSubtitulo.innerText = "Monitore submissões e realize apresentações ou avaliações.";
         
         Papa.parse("database.csv", {
             download: true,
@@ -144,7 +143,7 @@
 
                 results.data.forEach(row => {
                     const id = String(row.Número).trim();
-                    if(!id) return;
+                    if(!id || id === "undefined") return;
 
                     bancoDeDadosLocal[id] = row;
 
@@ -162,7 +161,6 @@
 
                     document.getElementById(`tit-${id}`).textContent = row.Título;
                     document.getElementById(`aut-${id}`).textContent = row.Autores;
-                    
                     verificarArquivo(id);
                 });
             }
@@ -173,47 +171,119 @@
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
             const campoStatus = document.getElementById('st-' + id);
             const campoAcoes = document.getElementById('acoes-' + id);
+            if (!campoStatus || !campoAcoes) return;
 
             if (res.ok) {
-                if (campoStatus) campoStatus.innerHTML = '<span class="status-ok">No Ar</span>';
-                if (campoAcoes) {
-                    campoAcoes.innerHTML = `
-                        <button onclick="iniciarApresentacaoAdmin('${id}')" 
-                                style="background:#28a745; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-weight:bold;">
-                            Play
-                        </button>
-                    `;
-                }
+                campoStatus.innerHTML = '<span class="status-ok">No Ar</span>';
+                campoAcoes.innerHTML = `
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="iniciarApresentacaoAdmin('${id}')" style="background:#28a745; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:bold;">Play</button>
+                        <button onclick="abrirAvaliacao('${id}')" style="background:#0054A6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:bold;">Avaliar</button>
+                    </div>`;
             } else {
-                if (campoStatus) campoStatus.innerHTML = '<span class="status-pendente">Pendente</span>';
-                if (campoAcoes) {
-                    campoAcoes.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">Subir</a>`;
-                }
+                campoStatus.innerHTML = '<span class="status-pendente">Pendente</span>';
+                campoAcoes.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">Subir</a>`;
             }
+        });
+    }
+
+    function abrirAvaliacao(id) {
+        const trab = bancoDeDadosLocal[id];
+        const notaExistente = JSON.parse(localStorage.getItem(`n-${id}`)) || {c1:5, c2:5, c3:5, c4:5};
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'modalAval';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Avaliar ID: ${id}</h3>
+                <p style="font-size:0.8rem; color:#666;">${trab.Título}</p>
+                <hr>
+                <label>Conteúdo (1-10): <span id="v1">${notaExistente.c1}</span></label>
+                <input type="range" id="c1" min="1" max="10" value="${notaExistente.c1}" oninput="document.getElementById('v1').innerText=this.value">
+                
+                <label>Metodologia (1-10): <span id="v2">${notaExistente.c2}</span></label>
+                <input type="range" id="c2" min="1" max="10" value="${notaExistente.c2}" oninput="document.getElementById('v2').innerText=this.value">
+                
+                <label>Visual (1-10): <span id="v3">${notaExistente.c3}</span></label>
+                <input type="range" id="c3" min="1" max="10" value="${notaExistente.c3}" oninput="document.getElementById('v3').innerText=this.value">
+
+                <label>Originalidade (1-10): <span id="v4">${notaExistente.c4}</span></label>
+                <input type="range" id="c4" min="1" max="10" value="${notaExistente.c4}" oninput="document.getElementById('v4').innerText=this.value">
+
+                <div style="margin-top:20px; display:flex; gap:10px;">
+                    <button onclick="salvarNota('${id}')" style="flex:1; background:var(--verde); color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;">Salvar</button>
+                    <button onclick="document.getElementById('modalAval').remove()" style="flex:1; background:#ccc; border:none; padding:10px; border-radius:5px; cursor:pointer;">Cancelar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+
+    function salvarNota(id) {
+        const n = {
+            c1: parseInt(document.getElementById('c1').value),
+            c2: parseInt(document.getElementById('c2').value),
+            c3: parseInt(document.getElementById('c3').value),
+            c4: parseInt(document.getElementById('c4').value)
+        };
+        n.media = (n.c1 + n.c2 + n.c3 + n.c4) / 4;
+        localStorage.setItem(`n-${id}`, JSON.stringify(n));
+        document.getElementById('modalAval').remove();
+        alert("Avaliação salva!");
+    }
+
+    function mostrarRanking() {
+        let lista = [];
+        Object.keys(localStorage).forEach(k => {
+            if(k.startsWith('n-')) {
+                const id = k.replace('n-', '');
+                const d = JSON.parse(localStorage.getItem(k));
+                if(bancoDeDadosLocal[id]) lista.push({id, media: d.media, titulo: bancoDeDadosLocal[id].Título});
+            }
+        });
+        lista.sort((a,b) => b.media - a.media);
+        const top10 = lista.slice(0, 10);
+
+        area.innerHTML = `
+            <div style="background:white; padding:20px; border-radius:12px;">
+                <h3>Top 10 - Melhores Avaliações</h3>
+                <canvas id="chartRanking" style="max-height:300px; margin-bottom:20px;"></canvas>
+                <table style="width:100%;">
+                    <thead><tr style="background:#eee;"><th>Pos</th><th>ID</th><th>Média</th><th>Ação</th></tr></thead>
+                    <tbody>
+                        ${top10.map((t, i) => `<tr><td>${i+1}º</td><td>${t.id}</td><td><b>${t.media.toFixed(2)}</b></td><td><button onclick="iniciarApresentacaoAdmin('${t.id}')" style="background:var(--azul); color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">Ver</button></td></tr>`).join('')}
+                    </tbody>
+                </table>
+                <button onclick="renderizarAdmin()" style="margin-top:20px; padding:10px; cursor:pointer;">Voltar à Gestão</button>
+            </div>`;
+        
+        new Chart(document.getElementById('chartRanking'), {
+            type: 'bar',
+            data: {
+                labels: top10.map(t => t.id),
+                datasets: [{ label: 'Média Final', data: top10.map(t => t.media), backgroundColor: '#0054A6' }]
+            },
+            options: { responsive: true, scales: { y: { min: 0, max: 10 } } }
         });
     }
 
     function iniciarApresentacaoAdmin(id) {
         const trabalho = bancoDeDadosLocal[id];
         if (trabalho) {
-            trabalho.modoApresentacao = true;
-            localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
+            const clone = { ...trabalho, modoApresentacao: true };
+            localStorage.setItem('trabalhoAtivo', JSON.stringify(clone));
             window.location.reload();
         }
     }
 
     function filtrarTabela() {
         const termo = document.getElementById("inputBusca").value.toLowerCase();
-        const linhas = document.querySelectorAll("#corpoTabela tr");
-        linhas.forEach(linha => {
+        document.querySelectorAll("#corpoTabela tr").forEach(linha => {
             linha.style.display = linha.innerText.toLowerCase().includes(termo) ? "" : "none";
         });
     }
 
-    function sair() {
-        localStorage.removeItem('trabalhoAtivo');
-        window.location.href = "index.html";
-    }
+    function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
 </script>
 
 </body>
