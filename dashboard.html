@@ -13,6 +13,8 @@
             --branco: #ffffff;
             --verde: #2e7d32;
             --vermelho: #d32f2f;
+            --laranja: #f39c12;
+            --roxo: #6a1b9a;
         }
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--fundo); padding-top: 80px; }
@@ -29,11 +31,8 @@
         
         .card-info { background: var(--branco); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 6px solid var(--azul); }
         .titulo-principal { color: var(--azul); margin: 0; font-size: 1.4rem; }
-        .subtitulo { margin: 5px 0 0 0; color: #666; font-size: 0.9rem; }
 
-        #displayArea { min-height: 75vh; background: #e0e0e0; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        iframe { width: 100%; height: 75vh; border: none; background: white; }
-
+        /* Controles de Gestão */
         .controles-gestao { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
@@ -42,6 +41,7 @@
         }
         .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; font-size: 0.9rem; }
 
+        /* Resumo Estatístico */
         .resumo-cards { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .card-mini { 
             background: white; padding: 12px; border-radius: 8px; flex: 1; min-width: 130px;
@@ -50,10 +50,14 @@
         .card-mini span { display: block; font-size: 1.3rem; font-weight: bold; color: var(--azul); }
         .card-mini label { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
 
+        #displayArea { min-height: 75vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        iframe { width: 100%; height: 75vh; border: none; background: white; }
+
         .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; min-width: 950px; }
         th { background: var(--azul); color: white; padding: 15px; text-align: left; position: sticky; top: 0; font-size: 0.85rem; }
         td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        tr:hover { background-color: #f9f9f9; }
 
         .badge { padding: 3px 7px; border-radius: 4px; font-weight: bold; font-size: 0.65rem; text-transform: uppercase; margin-right: 5px; }
         .badge-reprovado { background: #ffebee; color: var(--vermelho); }
@@ -65,6 +69,8 @@
         
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow-y: auto; max-height: 90vh; }
+        .modal-content label { display: block; margin-top: 12px; font-weight: bold; font-size: 0.85rem; }
+        .modal-content input, .modal-content textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -80,7 +86,7 @@
 
 <div class="container">
     <div class="card-info">
-        <h2 id="txtTitulo" class="titulo-principal">Carregando...</h2>
+        <h2 id="txtTitulo" class="titulo-principal">Painel de Gestão e Avaliação</h2>
         <p id="txtSubtitulo" class="subtitulo"></p>
     </div>
     <div id="displayArea"></div>
@@ -93,7 +99,6 @@
 
     const area = document.getElementById('displayArea');
     const txtTitulo = document.getElementById('txtTitulo');
-    const txtSubtitulo = document.getElementById('txtSubtitulo');
     const identificacao = document.getElementById('identificacao');
 
     if (dadosAtivos.Número === "ADMIN") {
@@ -101,35 +106,26 @@
         document.getElementById('btnRanking').style.display = 'inline-block';
         renderizarAdmin();
     } else {
-        identificacao.innerText = dadosAtivos.modoApresentacao ? "MODO APRESENTAÇÃO" : `ID: ${dadosAtivos.Número}`;
         renderizarAutor();
     }
 
     function renderizarAutor() {
         txtTitulo.innerText = dadosAtivos.Título;
-        txtSubtitulo.innerText = `Autores: ${dadosAtivos.Autores}`;
         const caminhoPDF = `posters/${dadosAtivos.Número}.pdf`;
         fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
             if (res.ok) {
-                area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0&navpanes=0"></iframe>`;
+                area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0"></iframe>`;
             } else {
-                if (dadosAtivos.modoApresentacao) {
-                    area.innerHTML = `<div style="text-align:center; padding: 50px;"><h2>PDF não localizado (${dadosAtivos.Número})</h2></div>`;
-                } else {
-                    const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${dadosAtivos.Número}`;
-                    area.innerHTML = `
-                        <div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%; box-sizing: border-box; overflow-y: auto;">
-                            <h3 style="color: #856404; margin-top: 0;">Poster em Processamento</h3>
-                            <iframe src="${linkForms}" style="width: 100%; max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px; background: white;"></iframe>
-                        </div>`;
-                }
+                const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${dadosAtivos.Número}`;
+                area.innerHTML = `<div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%;">
+                    <h3>Aguardando Sincronização</h3>
+                    <iframe src="${linkForms}" style="width: 100%; max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px; background: white;"></iframe>
+                </div>`;
             }
         });
     }
 
     function renderizarAdmin() {
-        txtTitulo.innerText = "Gestão de e-Posters ABEFACO";
-        txtSubtitulo.innerText = "Filtre e gerencie os trabalhos do congresso.";
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
@@ -151,19 +147,25 @@
                             <option value="enviado">Enviado</option>
                             <option value="pendente">Pendente</option>
                         </select>
+                        <select id="filtroAval" onchange="aplicarFiltros()">
+                            <option value="todos">Avaliação</option>
+                            <option value="sim">Avaliado</option>
+                            <option value="nao">Não Avaliado</option>
+                        </select>
                     </div>
 
                     <div class="resumo-cards">
-                        <div class="card-mini" style="border-top-color: var(--azul)"><label>Vistos</label><span id="countTotal">0</span></div>
+                        <div class="card-mini" style="border-top-color: var(--azul)"><label>Listados</label><span id="countTotal">0</span></div>
                         <div class="card-mini" style="border-top-color: var(--verde)"><label>Aprovados</label><span id="countAprov">0</span></div>
                         <div class="card-mini" style="border-top-color: var(--vermelho)"><label>Não Aprovados</label><span id="countReprov">0</span></div>
-                        <div class="card-mini" style="border-top-color: orange"><label>Avaliados</label><span id="countAval">0</span></div>
+                        <div class="card-mini" style="border-top-color: var(--roxo)"><label>PDFs Enviados</label><span id="countEnviado">0</span></div>
+                        <div class="card-mini" style="border-top-color: var(--laranja)"><label>Avaliados</label><span id="countAval">0</span></div>
                     </div>
 
                     <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>ID</th><th>Trabalho</th><th>Modalidade/Situação</th><th>PDF</th><th>Ações</th></tr>
+                            <tr><th>ID</th><th>Título</th><th>Tipo/Situação</th><th>PDF</th><th>Ações</th></tr>
                         </thead>
                         <tbody id="corpoTabela"></tbody>
                     </table></div>`;
@@ -184,7 +186,7 @@
                     tr.setAttribute('data-mod', mod);
                     tr.setAttribute('data-sit', sit);
                     tr.setAttribute('data-aval', aval);
-                    tr.setAttribute('data-pdf', 'verificando');
+                    tr.setAttribute('data-pdf', 'pendente');
 
                     tr.innerHTML = `
                         <td><b>${id}</b></td>
@@ -208,9 +210,10 @@
         const mod = document.getElementById("filtroMod").value;
         const sit = document.getElementById("filtroSit").value;
         const pdf = document.getElementById("filtroPDF").value;
+        const aval = document.getElementById("filtroAval").value;
         const linhas = document.querySelectorAll("#corpoTabela tr");
         
-        let cTotal = 0, cAprov = 0, cReprov = 0, cAval = 0;
+        let cTotal = 0, cAprov = 0, cReprov = 0, cAval = 0, cEnviado = 0;
 
         linhas.forEach(linha => {
             const texto = linha.innerText.toLowerCase();
@@ -222,7 +225,8 @@
             let match = texto.includes(termo) && 
                         (mod === "todos" || lMod === mod) &&
                         (sit === "todos" || lSit === sit) &&
-                        (pdf === "todos" || lPdf === pdf);
+                        (pdf === "todos" || lPdf === pdf) &&
+                        (aval === "todos" || lAval === aval);
 
             if (match) {
                 linha.style.display = "";
@@ -230,12 +234,14 @@
                 if (lSit === "Aprovado") cAprov++;
                 if (lSit === "Não Aprovado") cReprov++;
                 if (lAval === "sim") cAval++;
+                if (lPdf === "enviado") cEnviado++;
             } else { linha.style.display = "none"; }
         });
 
         document.getElementById('countTotal').innerText = cTotal;
         document.getElementById('countAprov').innerText = cAprov;
         document.getElementById('countReprov').innerText = cReprov;
+        document.getElementById('countEnviado').innerText = cEnviado;
         document.getElementById('countAval').innerText = cAval;
     }
 
@@ -269,12 +275,12 @@
         modal.className = 'modal'; modal.id = 'modalAval';
         modal.innerHTML = `<div class="modal-content">
             <h3>Avaliar: ${id}</h3><p style="font-size:0.75rem;">${trab.Título}</p><hr>
-            <label>Avaliador:</label><input type="text" id="nomeAv" value="${d.avaliador}" style="width:100%; padding:8px; margin:5px 0;">
-            <label>Conteúdo: <span id="v1">${d.c1}</span></label><input type="range" id="c1" min="1" max="10" value="${d.c1}" oninput="document.getElementById('v1').innerText=this.value" style="width:100%">
-            <label>Metodologia: <span id="v2">${d.c2}</span></label><input type="range" id="c2" min="1" max="10" value="${d.c2}" oninput="document.getElementById('v2').innerText=this.value" style="width:100%">
-            <label>Visual: <span id="v3">${d.c3}</span></label><input type="range" id="c3" min="1" max="10" value="${d.c3}" oninput="document.getElementById('v3').innerText=this.value" style="width:100%">
-            <label>Originalidade: <span id="v4">${d.c4}</span></label><input type="range" id="c4" min="1" max="10" value="${d.c4}" oninput="document.getElementById('v4').innerText=this.value" style="width:100%">
-            <label>Observações:</label><textarea id="obs" rows="3" style="width:100%">${d.obs || ""}</textarea>
+            <label>Avaliador:</label><input type="text" id="nomeAv" value="${d.avaliador}" placeholder="Seu nome">
+            <label>Conteúdo: <span id="v1">${d.c1}</span></label><input type="range" id="c1" min="1" max="10" value="${d.c1}" oninput="document.getElementById('v1').innerText=this.value">
+            <label>Metodologia: <span id="v2">${d.c2}</span></label><input type="range" id="c2" min="1" max="10" value="${d.c2}" oninput="document.getElementById('v2').innerText=this.value">
+            <label>Visual: <span id="v3">${d.c3}</span></label><input type="range" id="c3" min="1" max="10" value="${d.c3}" oninput="document.getElementById('v3').innerText=this.value">
+            <label>Originalidade: <span id="v4">${d.c4}</span></label><input type="range" id="c4" min="1" max="10" value="${d.c4}" oninput="document.getElementById('v4').innerText=this.value">
+            <label>Observações:</label><textarea id="obs" rows="3">${d.obs || ""}</textarea>
             <div style="margin-top:15px; display:flex; gap:10px;">
                 <button onclick="salvarNota('${id}')" style="flex:1; background:var(--verde); color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Salvar</button>
                 <button onclick="document.getElementById('modalAval').remove()" style="flex:1; background:#ccc; border:none; padding:10px; border-radius:5px; cursor:pointer;">Sair</button>
@@ -312,7 +318,7 @@
             <h3>Top 10 Trabalhos</h3>
             <canvas id="chartRanking" style="max-height:280px; margin-bottom:20px;"></canvas>
             <table style="width:100%; border-collapse:collapse;">
-                <thead><tr style="background:#f8f9fa; border-bottom:2px solid #eee;"><th>Pos</th><th>Trabalho</th><th>Média</th><th>Ver</th></tr></thead>
+                <thead><tr style="background:#f8f9fa;"><th>Pos</th><th>Trabalho</th><th>Média</th><th>Ver</th></tr></thead>
                 <tbody>${top10.map((t, i) => `<tr>
                     <td style="padding:10px;"><b>${i+1}º</b></td>
                     <td style="padding:10px;"><div style="font-weight:bold;">${t.titulo}</div><small>Avaliador: ${t.avaliador}</small></td>
