@@ -96,7 +96,26 @@
     function renderizarAutor() {
         txtTitulo.innerText = dadosAtivos.Título;
         txtSubtitulo.innerText = `Autores: ${dadosAtivos.Autores}`;
-        area.innerHTML = `<iframe src="posters/${dadosAtivos.Número}.pdf#toolbar=0"></iframe>`;
+        const caminhoPDF = `posters/${dadosAtivos.Número}.pdf`;
+
+        fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
+            if (res.ok) {
+                area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0&navpanes=0"></iframe>`;
+            } else {
+                if (dadosAtivos.modoApresentacao) {
+                    area.innerHTML = `<div style="text-align:center; padding: 50px;"><h2>O PDF deste trabalho (${dadosAtivos.Número}) não foi localizado.</h2></div>`;
+                } else {
+                    // LINK CORRIGIDO DO FORMULÁRIO (Certifique-se que o ID do formulário está correto)
+                    const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${dadosAtivos.Número}`;
+                    area.innerHTML = `
+                        <div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%; box-sizing: border-box; overflow-y: auto;">
+                            <h3 style="color: #856404; margin-top: 0;">Poster em Processamento</h3>
+                            <p style="color: #666; margin-bottom: 25px;">O arquivo PDF ainda não foi sincronizado.</p>
+                            <iframe src="${linkForms}" style="width: 100%; max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px; background: white;"></iframe>
+                        </div>`;
+                }
+            }
+        });
     }
 
     function renderizarAdmin() {
@@ -148,13 +167,13 @@
                     tbody.appendChild(tr);
                     document.getElementById(`tit-${id}`).textContent = row.Título;
                     document.getElementById(`aut-${id}`).textContent = row.Autores;
-                    verificarArquivo(id, tr);
+                    verificarArquivoAdmin(id, tr);
                 });
             }
         });
     }
 
-    function verificarArquivo(id, tr) {
+    function verificarArquivoAdmin(id, tr) {
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
             const campoStatus = document.getElementById('st-' + id);
             const campoAcoes = document.getElementById('acoes-' + id);
@@ -162,13 +181,13 @@
                 tr.setAttribute('data-pdf', 'enviado');
                 campoStatus.innerHTML = '<span style="color:green; font-weight:bold;">Enviado</span>';
                 campoAcoes.innerHTML = `<div style="display:flex; gap:5px;">
-                    <button onclick="iniciarApresentacaoAdmin('${id}')" style="background:#28a745; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Play</button>
-                    <button onclick="abrirAvaliacao('${id}')" style="background:#0054A6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Avaliar</button>
+                    <button onclick="iniciarApresentacaoAdmin('${id}')" style="background:#28a745; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:bold;">Play</button>
+                    <button onclick="abrirAvaliacao('${id}')" style="background:#0054A6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:bold;">Avaliar</button>
                 </div>`;
             } else {
                 tr.setAttribute('data-pdf', 'pendente');
                 campoStatus.innerHTML = '<span style="color:red; font-weight:bold;">Pendente</span>';
-                campoAcoes.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" style="font-size:11px; color:#0054A6;">Subir</a>`;
+                campoAcoes.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" style="font-size:11px; color:#0054A6; font-weight:bold; text-decoration:none;">Subir</a>`;
             }
         });
     }
@@ -261,7 +280,7 @@
         const top10 = lista.slice(0, 10);
 
         area.innerHTML = `
-            <div style="background:white; padding:20px; border-radius:12px;">
+            <div style="background:white; padding:20px; border-radius:12px; height: 100%; overflow-y: auto;">
                 <h3>Ranking Top 10 Melhores Trabalhos</h3>
                 <canvas id="chartRanking" style="max-height:300px; margin-bottom:25px;"></canvas>
                 <div class="table-container">
