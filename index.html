@@ -68,7 +68,6 @@
         }
         button:hover { background-color: #003d7a; }
 
-        /* Estilo para a nova seção de apresentação */
         .divider {
             margin: 30px 0;
             border-top: 1px solid #ddd;
@@ -87,7 +86,7 @@
         }
 
         .btn-secundario {
-            background-color: #28a745; /* Verde para diferenciar */
+            background-color: #28a745;
         }
         .btn-secundario:hover { background-color: #1e7e34; }
 
@@ -117,7 +116,7 @@
     </div>
     <div class="input-group">
         <label for="codigo">Código do Trabalho (ID)</label>
-        <input type="text" id="codigo" placeholder="Digite o ID numérico">
+        <input type="password" id="codigo" placeholder="Digite o ID numérico">
     </div>
     <button id="btnAcessar">Acessar Painel</button>
 
@@ -126,7 +125,7 @@
     <p>Visualização Rápida (Apenas ID)</p>
     <div class="input-group">
         <label for="codigoApresentacao">Código para Apresentação</label>
-        <input type="text" id="codigoApresentacao" placeholder="Ex: 1408915">
+        <input type="password" id="codigoApresentacao" placeholder="Digite o ID numérico">
     </div>
     <button id="btnApresentar" class="btn-secundario">Iniciar Apresentação</button>
 
@@ -149,7 +148,6 @@
             return;
         }
 
-        // Validação Admin
         if (emailUser === "abefaco@gmail.com" && codUser === "092026") {
             localStorage.setItem('trabalhoAtivo', JSON.stringify({
                 Número: "ADMIN", Título: "PAINEL ADMINISTRATIVO", Autores: "Gestão ABEFACO"
@@ -193,7 +191,6 @@
                 const trabalho = results.data.find(t => String(t.Número).trim() === codUser);
                 
                 if (trabalho) {
-                    // Adiciona a marcação de modo apresentação
                     trabalho.modoApresentacao = true; 
                     localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
                     window.location.href = "dashboard.html";
