@@ -112,7 +112,7 @@
                     const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${dadosAtivos.Número}`;
                     area.innerHTML = `
                         <div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%; box-sizing: border-box;">
-                            <h3 style="color: #856404; margin-top: 0;">⌛ Poster em Processamento</h3>
+                            <h3 style="color: #856404; margin-top: 0;">Poster em Processamento</h3>
                             <p style="color: #666; margin-bottom: 25px;">O arquivo PDF ainda não foi sincronizado. <br>
                             <strong>Se você ainda não enviou</strong>, use o formulário abaixo:</p>
                             <iframe src="${linkForms}" style="max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></iframe>
@@ -136,7 +136,7 @@
             complete: function(results) {
                 let html = `
                     <div class="busca-box">
-                        <input type="text" id="inputBusca" onkeyup="filtrarTabela()" placeholder="🔍 Pesquisar por ID, Nome ou Título...">
+                        <input type="text" id="inputBusca" onkeyup="filtrarTabela()" placeholder="Pesquisar por ID, Nome ou Título...">
                     </div>
                     <div class="table-container">
                     <table>
@@ -158,9 +158,9 @@
                         <tr>
                             <td><b>${id}</b></td>
                             <td>${row.Título.substring(0, 60)}...<br><small style="color:#888">${row.Autores}</small></td>
-                            <td id="st-${id}">⌛ Verificando...</td>
+                            <td id="st-${id}">Verificando...</td>
                             <td id="acoes-${id}">
-                                <a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">⬆️ Subir</a>
+                                <a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">Subir</a>
                             </td>
                         </tr>`;
                     
@@ -180,20 +180,20 @@
             const campoAcoes = document.getElementById('acoes-' + id);
 
             if (res.ok) {
-                if (campoStatus) campoStatus.innerHTML = '<span class="status-ok">✅ No Ar</span>';
+                if (campoStatus) campoStatus.innerHTML = '<span class="status-ok">No Ar</span>';
                 if (campoAcoes) {
                     campoAcoes.innerHTML = `
                         <button onclick='iniciarApresentacaoAdmin(${JSON.stringify(dadosCompletos)})' 
                                 style="background:#28a745; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-weight:bold;">
-                            ▶️ Play
+                            Play
                         </button>
                     `;
                 }
             } else {
-                if (campoStatus) campoStatus.innerHTML = '<span class="status-pendente">❌ Pendente</span>';
+                if (campoStatus) campoStatus.innerHTML = '<span class="status-pendente">Pendente</span>';
                 // Mantém o link de upload para o administrador
                 if (campoAcoes) {
-                    campoAcoes.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">⬆️ Subir</a>`;
+                    campoAcoes.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">Subir</a>`;
                 }
             }
         });
