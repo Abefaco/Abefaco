@@ -16,7 +16,6 @@
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--fundo); padding-top: 80px; }
         
-        /* Header Fixo */
         header { 
             background: var(--branco); padding: 0 25px; height: 70px;
             position: fixed; top: 0; width: 100%; box-sizing: border-box;
@@ -27,16 +26,13 @@
 
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         
-        /* Card de Informações */
         .card-info { background: var(--branco); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 6px solid var(--azul); }
         .titulo-principal { color: var(--azul); margin: 0; font-size: 1.4rem; }
         .subtitulo { margin: 5px 0 0 0; color: #666; font-size: 0.9rem; }
 
-        /* Área de Exibição Principal */
         #displayArea { min-height: 75vh; background: #e0e0e0; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
         iframe { width: 100%; height: 75vh; border: none; background: white; }
 
-        /* Estilos da Tabela Admin e Busca */
         .busca-box { margin-bottom: 15px; }
         #inputBusca { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
         #inputBusca:focus { border-color: var(--azul); }
@@ -70,13 +66,13 @@
         <p id="txtSubtitulo" class="subtitulo"></p>
     </div>
 
-    <div id="displayArea">
-        </div>
+    <div id="displayArea"></div>
 </div>
 
 <script>
-    // 1. RECUPERA DADOS DA SESSÃO
+    let bancoDeDadosLocal = {}; 
     const dadosAtivos = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    
     if (!dadosAtivos) { window.location.href = "index.html"; }
 
     const area = document.getElementById('displayArea');
@@ -84,7 +80,6 @@
     const txtSubtitulo = document.getElementById('txtSubtitulo');
     const identificacao = document.getElementById('identificacao');
 
-    // 2. LÓGICA DE RENDERIZAÇÃO POR PERFIL
     if (dadosAtivos.Número === "ADMIN") {
         identificacao.innerText = "SESSÃO: ADMINISTRADOR";
         renderizarAdmin();
@@ -93,7 +88,6 @@
         renderizarAutor();
     }
 
-    // --- VISÃO DO AUTOR / APRESENTAÇÃO ---
     function renderizarAutor() {
         txtTitulo.innerText = dadosAtivos.Título;
         txtSubtitulo.innerText = `Autores: ${dadosAtivos.Autores}`;
@@ -102,10 +96,8 @@
 
         fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
             if (res.ok) {
-                // PDF EXISTE: Mostra o Visualizador limpo para apresentação
                 area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0&navpanes=0"></iframe>`;
             } else {
-                // PDF AUSENTE
                 if (dadosAtivos.modoApresentacao) {
                     area.innerHTML = `<div style="text-align:center; padding: 50px;"><h2>O PDF deste trabalho (${dadosAtivos.Número}) não foi localizado.</h2></div>`;
                 } else {
@@ -113,18 +105,14 @@
                     area.innerHTML = `
                         <div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%; box-sizing: border-box;">
                             <h3 style="color: #856404; margin-top: 0;">Poster em Processamento</h3>
-                            <p style="color: #666; margin-bottom: 25px;">O arquivo PDF ainda não foi sincronizado. <br>
-                            <strong>Se você ainda não enviou</strong>, use o formulário abaixo:</p>
-                            <iframe src="${linkForms}" style="max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></iframe>
+                            <p style="color: #666; margin-bottom: 25px;">O arquivo PDF ainda não foi sincronizado.</p>
+                            <iframe src="${linkForms}" style="width: 100%; max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></iframe>
                         </div>`;
                 }
             }
-        }).catch(() => {
-            area.innerHTML = "<p style='padding:20px;'>Erro de conexão ao validar arquivo.</p>";
         });
     }
 
-    // --- VISÃO DO ADMINISTRADOR ---
     function renderizarAdmin() {
         txtTitulo.innerText = "Gestão de e-Posters ABEFACO";
         txtSubtitulo.innerText = "Monitore submissões e realize apresentações ou uploads.";
@@ -136,7 +124,7 @@
             complete: function(results) {
                 let html = `
                     <div class="busca-box">
-                        <input type="text" id="inputBusca" onkeyup="filtrarTabela()" placeholder="Pesquisar por ID, Nome ou Título...">
+                        <input type="text" id="inputBusca" onkeyup="filtrarTabela()" placeholder="Pesquisar...">
                     </div>
                     <div class="table-container">
                     <table>
@@ -148,33 +136,40 @@
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="corpoTabela">`;
+                        <tbody id="corpoTabela"></tbody>
+                    </table></div>`;
+
+                area.innerHTML = html;
+                const tbody = document.getElementById('corpoTabela');
 
                 results.data.forEach(row => {
                     const id = String(row.Número).trim();
-                    if(!id || id === "") return;
+                    if(!id) return;
 
-                    html += `
-                        <tr>
-                            <td><b>${id}</b></td>
-                            <td>${row.Título.substring(0, 60)}...<br><small style="color:#888">${row.Autores}</small></td>
-                            <td id="st-${id}">Verificando...</td>
-                            <td id="acoes-${id}">
-                                <a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">Subir</a>
-                            </td>
-                        </tr>`;
+                    bancoDeDadosLocal[id] = row;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><b>${id}</b></td>
+                        <td>
+                            <div id="tit-${id}" style="font-weight:bold;"></div>
+                            <small id="aut-${id}" style="color:#888;"></small>
+                        </td>
+                        <td id="st-${id}">Verificando...</td>
+                        <td id="acoes-${id}"></td>
+                    `;
+                    tbody.appendChild(tr);
+
+                    document.getElementById(`tit-${id}`).textContent = row.Título;
+                    document.getElementById(`aut-${id}`).textContent = row.Autores;
                     
-                    verificarArquivo(id, row);
+                    verificarArquivo(id);
                 });
-
-                html += "</tbody></table></div>";
-                area.innerHTML = html;
             }
         });
     }
 
-    // Função que checa o status e altera os botões dinamicamente
-    function verificarArquivo(id, dadosCompletos) {
+    function verificarArquivo(id) {
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
             const campoStatus = document.getElementById('st-' + id);
             const campoAcoes = document.getElementById('acoes-' + id);
@@ -183,7 +178,7 @@
                 if (campoStatus) campoStatus.innerHTML = '<span class="status-ok">No Ar</span>';
                 if (campoAcoes) {
                     campoAcoes.innerHTML = `
-                        <button onclick='iniciarApresentacaoAdmin(${JSON.stringify(dadosCompletos)})' 
+                        <button onclick="iniciarApresentacaoAdmin('${id}')" 
                                 style="background:#28a745; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-weight:bold;">
                             Play
                         </button>
@@ -191,7 +186,6 @@
                 }
             } else {
                 if (campoStatus) campoStatus.innerHTML = '<span class="status-pendente">Pendente</span>';
-                // Mantém o link de upload para o administrador
                 if (campoAcoes) {
                     campoAcoes.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" class="btn-upload">Subir</a>`;
                 }
@@ -199,20 +193,21 @@
         });
     }
 
-    // Permite que o Admin entre no modo de visualização do PDF específico
-    function iniciarApresentacaoAdmin(trabalho) {
-        trabalho.modoApresentacao = true;
-        localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
-        window.location.reload(); // Recarrega para aplicar a visão de Autor/Apresentação
+    function iniciarApresentacaoAdmin(id) {
+        const trabalho = bancoDeDadosLocal[id];
+        if (trabalho) {
+            trabalho.modoApresentacao = true;
+            localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
+            window.location.reload();
+        }
     }
 
-    // Busca Instantânea
     function filtrarTabela() {
         const termo = document.getElementById("inputBusca").value.toLowerCase();
-        const linhas = document.getElementById("corpoTabela").getElementsByTagName("tr");
-        for (let i = 0; i < linhas.length; i++) {
-            linhas[i].style.display = linhas[i].innerText.toLowerCase().includes(termo) ? "" : "none";
-        }
+        const linhas = document.querySelectorAll("#corpoTabela tr");
+        linhas.forEach(linha => {
+            linha.style.display = linha.innerText.toLowerCase().includes(termo) ? "" : "none";
+        });
     }
 
     function sair() {
