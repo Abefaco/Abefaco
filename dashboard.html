@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel CBEFC 2026 - Gestão Total</title>
+    <title>Painel CBEFC 2026 - Gestão e Visualização</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --laranja: #ef6c00; }
+        :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --cinza: #6c757d; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--fundo); padding-top: 80px; }
         
         header { 
@@ -15,8 +15,9 @@
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box;
         }
 
-        .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1350px; margin: 0 auto; padding: 20px; }
         
+        /* Controles Admin */
         .controles-gestao { 
             display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
             gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
@@ -28,6 +29,7 @@
         .card-mini span { display: block; font-size: 1.2rem; font-weight: bold; color: var(--azul); }
         .card-mini label { font-size: 0.6rem; color: #666; text-transform: uppercase; font-weight: bold; }
 
+        /* Tabela */
         .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { background: var(--azul); color: white; padding: 12px; text-align: left; font-size: 0.8rem; }
@@ -36,54 +38,48 @@
         .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; color: transparent; font-weight: bold; line-height: 20px; text-align: center; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
 
-        /* Ajuste do botão de interrogação (?) */
-        .help-icon {
-            display: inline-block; width: 22px; height: 22px; background: #6c757d; color: white;
-            border-radius: 50%; text-align: center; font-size: 14px; cursor: help; line-height: 22px;
-            font-weight: bold; position: relative; margin-left: 8px; vertical-align: middle;
-        }
-        .help-icon:hover::after {
-            content: attr(data-help); position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
-            background: #212529; color: white; padding: 12px; border-radius: 6px; width: 240px; font-weight: normal; z-index: 9999; font-size: 12px; line-height: 1.4; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+        .btn-play { background: var(--verde); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-avaliar { background: var(--azul); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
 
+        /* Modal */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
         .criterio-row { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .criterio-row label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--azul); font-size: 1rem; }
-        .score-val { float: right; font-weight: bold; color: var(--verde); font-size: 1.2rem; }
+        .criterio-row label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--azul); }
     </style>
 </head>
 <body>
 
 <header>
     <img src="logo.png" alt="ABEFACO" style="height: 45px;">
-    <div id="identificacao" style="font-weight: bold; color: var(--azul);">PAINEL ADMINISTRATIVO</div>
+    <div id="identificacao" style="font-weight: bold; color: var(--azul);">A VALIDAR...</div>
     <div>
         <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="voltarParaAdmin()">Voltar ao Painel</button>
-        <button onclick="localStorage.removeItem('trabalhoAtivo'); window.location.href='index.html'" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
+        <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
     </div>
 </header>
 
 <div class="container">
-    <div class="card-info"><h2 id="txtTitulo" class="titulo-principal">Gestão e Sincronização CBEFC 2026</h2></div>
-    <div id="displayArea"></div>
+    <div id="displayArea">Carregando informações...</div>
 </div>
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
     let bancoDeDadosCompleto = {};
     let avaliacoesGlobais = [];
-    const dadosAtivos = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    const sessao = JSON.parse(localStorage.getItem('trabalhoAtivo'));
 
-    if (!dadosAtivos || dadosAtivos.Número !== "ADMIN") { window.location.href = "index.html"; }
+    // CORREÇÃO DO LOOP: Apenas verifica se existe sessão. Não barra se não for ADMIN.
+    if (!sessao) { window.location.href = "index.html"; }
 
-    async function carregarTudo() {
+    async function inicializar() {
+        // Puxa avaliações da nuvem (Google)
         try {
             const resp = await fetch(GOOGLE_SCRIPT_URL);
             avaliacoesGlobais = await resp.json();
-        } catch(e) { console.error("Erro na sincronização global."); }
+        } catch(e) { console.error("Planilha offline."); }
 
+        // Puxa o banco de dados CSV
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
@@ -91,7 +87,52 @@
                     const id = String(row.Número).trim();
                     if(id) bancoDeDadosCompleto[id] = row; 
                 });
-                renderizarPainelAdmin(results.data);
+
+                decidirVisualizacao(results.data);
+            }
+        });
+    }
+
+    function decidirVisualizacao(listaCSV) {
+        const area = document.getElementById('displayArea');
+        
+        // Se for ADMIN e não estiver vendo um trabalho específico
+        if (sessao.Número === "ADMIN" && !sessao.modoApresentacao) {
+            document.getElementById('identificacao').innerText = "PAINEL ADMINISTRATIVO";
+            renderizarPainelAdmin(listaCSV);
+        } else {
+            // Se for um ID de autor OU Admin em modo apresentação
+            const idAlvo = sessao.modoApresentacao ? sessao.idSelecionado : sessao.Número;
+            document.getElementById('identificacao').innerText = "TRABALHO ID: " + idAlvo;
+            
+            if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
+            
+            renderizarVisualizacaoSolo(idAlvo);
+        }
+    }
+
+    function renderizarVisualizacaoSolo(id) {
+        const area = document.getElementById('displayArea');
+        const trab = bancoDeDadosCompleto[id];
+        const titulo = trab ? trab.Título : "Trabalho " + id;
+        const caminhoPDF = `posters/${id}.pdf`;
+
+        area.innerHTML = `
+            <h2 style="color:var(--azul); margin-bottom:20px;">${titulo}</h2>
+            <div id="pdfWrapper">Verificando arquivo...</div>`;
+
+        fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
+            if (res.ok) {
+                document.getElementById('pdfWrapper').innerHTML = `
+                    <iframe src="${caminhoPDF}" width="100%" height="800px" style="border:none; background:#525659; border-radius:8px;"></iframe>`;
+            } else {
+                const forms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
+                document.getElementById('pdfWrapper').innerHTML = `
+                    <div style="text-align:center; padding:30px; background:#fffbe6; border:1px solid #ffe58f; border-radius:10px;">
+                        <h3>PDF não localizado</h3>
+                        <p>O arquivo <b>${id}.pdf</b> não foi encontrado. Você pode submetê-lo abaixo:</p>
+                        <iframe src="${forms}" width="100%" height="550px" style="border:none; background:white;"></iframe>
+                    </div>`;
             }
         });
     }
@@ -100,8 +141,7 @@
         document.getElementById('displayArea').innerHTML = `
             <div class="controles-gestao">
                 <input type="text" id="inputBusca" onkeyup="filtrar()" placeholder="Buscar ID ou Título...">
-                <select id="fMod" onchange="filtrar()"><option value="todos">Todas Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
-                <select id="fSit" onchange="filtrar()"><option value="todos">Todas Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
+                <select id="fMod" onchange="filtrar()"><option value="todos">Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
                 <select id="fPDF" onchange="filtrar()"><option value="todos">Status PDF</option><option value="sim">Enviado</option><option value="nao">Pendente</option></select>
                 <button onclick="mostrarRanking()" style="background:var(--azul); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Ver Ranking</button>
             </div>
@@ -111,7 +151,7 @@
                 <div class="card-mini" style="border-top-color: orange"><label>Avaliados (Global)</label><span id="cAval">0</span></div>
             </div>
             <div class="table-container"><table>
-                <thead><tr><th>Presença</th><th>ID</th><th>Título / Autores</th><th>PDF</th><th>Ações</th></tr></thead>
+                <thead><tr><th>Presença</th><th>ID</th><th>Título</th><th>PDF</th><th>Ações</th></tr></thead>
                 <tbody id="corpoTabela"></tbody>
             </table></div>`;
 
@@ -119,75 +159,45 @@
         lista.forEach(row => {
             const id = String(row.Número).trim();
             if(!id) return;
-            const foiAvaliado = avaliacoesGlobais.some(a => a.id === id);
-            const pres = localStorage.getItem(`pres-${id}`) === 'true';
-            const mod = (row.modalidade || "").toLowerCase().includes('oral') ? 'Oral' : 'e-Poster';
+            const avaliado = avaliacoesGlobais.some(a => a.id === id);
+            const presLocal = localStorage.getItem(`pres-${id}`) === 'true';
 
             const tr = document.createElement('tr');
             tr.id = `tr-${id}`;
-            tr.setAttribute('data-mod', mod);
-            tr.setAttribute('data-sit', (row.Situação || "").trim());
-            tr.setAttribute('data-aval', foiAvaliado ? 'sim' : 'nao');
-            tr.setAttribute('data-pdf', 'verificando');
-
+            tr.setAttribute('data-mod', (row.modalidade || "").includes('Oral') ? 'Oral' : 'e-Poster');
+            
             tr.innerHTML = `
-                <td style="text-align:center;"><button id="check-${id}" class="btn-check ${pres ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
+                <td style="text-align:center;"><button id="check-${id}" class="btn-check ${presLocal ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
                 <td><b>${id}</b></td>
-                <td><div style="font-weight:bold;">${row.Título}</div><small style="color:#777;">${row.Autores}</small></td>
+                <td><div style="font-weight:bold">${row.Título}</div><small>${row.Autores}</small></td>
                 <td id="st-${id}">...</td>
                 <td id="acoes-${id}"></td>`;
             
             tbody.appendChild(tr);
-            verificarPDF(id, tr, pres);
+            verificarPDFAdmin(id, tr, presLocal);
         });
     }
 
-    function verificarPDF(id, tr, estaPresente) {
+    function verificarPDFAdmin(id, tr, estaPresente) {
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
-            const temPDF = res.ok;
-            tr.setAttribute('data-pdf', temPDF ? 'sim' : 'nao');
-            document.getElementById('st-'+id).innerHTML = temPDF ? '<b style="color:green">Sim</b>' : '<b style="color:red">Não</b>';
-            atualizarAcoes(id, temPDF, estaPresente);
+            const existe = res.ok;
+            tr.setAttribute('data-pdf', existe ? 'sim' : 'nao');
+            document.getElementById('st-'+id).innerHTML = existe ? '<b style="color:green">Sim</b>' : '<b style="color:red">Não</b>';
+            
+            let html = "";
+            if(existe) html += `<button onclick="play('${id}')" class="btn-play">Play</button>`;
+            if(estaPresente) html += `<button onclick="avaliar('${id}')" class="btn-avaliar">Avaliar</button>`;
+            document.getElementById('acoes-'+id).innerHTML = html;
             filtrar();
         });
     }
 
-    function atualizarAcoes(id, temPDF, estaPresente) {
-        const ac = document.getElementById('acoes-'+id);
-        let html = "";
-        if(temPDF) {
-            html += `<button onclick="play('${id}')" style="background:var(--verde); color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Play</button>`;
-        } else {
-            html += `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" style="font-size:10px; color:var(--azul); font-weight:bold; display:block;">SUBIR PDF</a>`;
-        }
-        if(estaPresente) {
-            html += `<button onclick="avaliar('${id}')" style="background:var(--azul); color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; margin-left:4px;">Avaliar</button>`;
-        }
-        ac.innerHTML = html;
-    }
-
     function togglePresenca(id) {
         const btn = document.getElementById(`check-${id}`);
-        const checked = btn.classList.toggle('checked');
-        localStorage.setItem(`pres-${id}`, checked);
-        const tr = document.getElementById(`tr-${id}`);
-        atualizarAcoes(id, tr.getAttribute('data-pdf') === 'sim', checked);
-    }
-
-    function filtrar() {
-        const t = document.getElementById('inputBusca')?.value.toLowerCase() || "";
-        const m = document.getElementById('fMod')?.value || "todos";
-        const s = document.getElementById('fSit')?.value || "todos";
-        const p = document.getElementById('fPDF')?.value || "todos";
-        let cT=0, cE=0, cA=0;
-        document.querySelectorAll("#corpoTabela tr").forEach(l => {
-            let match = l.innerText.toLowerCase().includes(t) && (m==='todos'||l.getAttribute('data-mod')===m) && (s==='todos'||l.getAttribute('data-sit')===s) && (p==='todos'||l.getAttribute('data-pdf')===p);
-            l.style.display = match ? "" : "none";
-            if(match) { cT++; if(l.getAttribute('data-pdf')==='sim') cE++; if(l.getAttribute('data-aval')==='sim') cA++; }
-        });
-        document.getElementById('cTotal').innerText = cT;
-        document.getElementById('cEnviado').innerText = cE;
-        document.getElementById('cAval').innerText = cA;
+        const novoStatus = !btn.classList.contains('checked');
+        btn.classList.toggle('checked', novoStatus);
+        localStorage.setItem(`pres-${id}`, novoStatus);
+        location.reload(); // Recarrega para aplicar a liberação do botão avaliar
     }
 
     function avaliar(id) {
@@ -195,67 +205,59 @@
         modal.className = 'modal'; modal.id = 'mNota';
         modal.innerHTML = `
             <div class="modal-content">
-                <h3 style="margin-top:0; color:var(--azul)">Avaliar ID: ${id}</h3>
+                <h3>Avaliando ID: ${id}</h3>
                 <label>Avaliador:</label><input type="text" id="avNome" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px">
-                <div class="criterio-row">
-                    <label>1. Relevância (20) <span class="help-icon" data-help="O tema é relevante para a área da saúde da família e enfermagem?">?</span></label>
-                    <input type="range" id="c1" min="0" max="20" value="0" oninput="v1.innerText=this.value"> <span class="score-val" id="v1">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>2. Metodologia (10) <span class="help-icon" data-help="Adequação aos objetivos e validade dos resultados.">?</span></label>
-                    <input type="range" id="c2" min="0" max="10" value="0" oninput="v2.innerText=this.value"> <span class="score-val" id="v2">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>3. Visual (10) <span class="help-icon" data-help="Trabalho adequado ao modelo e conteúdo claro.">?</span></label>
-                    <input type="range" id="c3" min="0" max="10" value="0" oninput="v3.innerText=this.value"> <span class="score-val" id="v3">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>4. Oral (10) <span class="help-icon" data-help="Linguagem clara, objetiva e domínio do tema.">?</span></label>
-                    <input type="range" id="c4" min="0" max="10" value="0" oninput="v4.innerText=this.value"> <span class="score-val" id="v4">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>5. Aplicabilidade (20) <span class="help-icon" data-help="Resultados aplicáveis na prática clínica.">?</span></label>
-                    <input type="range" id="c5" min="0" max="20" value="0" oninput="v5.innerText=this.value"> <span class="score-val" id="v5">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>6. Originalidade (20) <span class="help-icon" data-help="Ideias originais ou nova perspectiva.">?</span></label>
-                    <input type="range" id="c6" min="0" max="20" value="0" oninput="v6.innerText=this.value"> <span class="score-val" id="v6">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>7. Presença (10) <span class="help-icon" data-help="Compareceu no dia e local determinado.">?</span></label>
-                    <input type="range" id="c7" min="0" max="10" value="0" oninput="v7.innerText=this.value"> <span class="score-val" id="v7">0</span>
-                </div>
-                <button onclick="enviarParaPlanilha('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; margin-top:10px; border-radius:8px; cursor:pointer; font-weight:bold;">SALVAR GLOBALMENTE</button>
-                <button onclick="mNota.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Fechar</button>
+                <div class="criterio-row"><label>Relevância (20)</label><input type="range" id="c1" min="0" max="20" value="0" oninput="v1.innerText=this.value"><span style="float:right" id="v1">0</span></div>
+                <div class="criterio-row"><label>Metodologia (10)</label><input type="range" id="c2" min="0" max="10" value="0" oninput="v2.innerText=this.value"><span style="float:right" id="v2">0</span></div>
+                <div class="criterio-row"><label>Visual (10)</label><input type="range" id="c3" min="0" max="10" value="0" oninput="v3.innerText=this.value"><span style="float:right" id="v3">0</span></div>
+                <div class="criterio-row"><label>Oral (10)</label><input type="range" id="c4" min="0" max="10" value="0" oninput="v4.innerText=this.value"><span style="float:right" id="v4">0</span></div>
+                <div class="criterio-row"><label>Aplicabilidade (20)</label><input type="range" id="c5" min="0" max="20" value="0" oninput="v5.innerText=this.value"><span style="float:right" id="v5">0</span></div>
+                <div class="criterio-row"><label>Originalidade (20)</label><input type="range" id="c6" min="0" max="20" value="0" oninput="v6.innerText=this.value"><span style="float:right" id="v6">0</span></div>
+                <div class="criterio-row"><label>Presença (10)</label><input type="range" id="c7" min="0" max="10" value="0" oninput="v7.innerText=this.value"><span style="float:right" id="v7">0</span></div>
+                <button onclick="salvarGlobal('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px">SALVAR NA PLANILHA GLOBAL</button>
+                <button onclick="mNota.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Cancelar</button>
             </div>`;
         document.body.appendChild(modal);
     }
 
-    async function enviarParaPlanilha(id) {
+    async function salvarGlobal(id) {
         const total = Number(c1.value)+Number(c2.value)+Number(c3.value)+Number(c4.value)+Number(c5.value)+Number(c6.value)+Number(c7.value);
-        const dados = { id, avaliador: avNome.value, c1:c1.value, c2:c2.value, c3:c3.value, c4:c4.value, c5:c5.value, c6:c6.value, c7:c7.value, total };
+        const dados = { id, avaliador: avNome.value, c1:c1.value, c2:c2.value, c3:c3.value, c4:c4.value, c5:c5.value, c6:c6.value, c7:c7.value, total, presenca: true };
         await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
-        alert("Avaliação sincronizada!"); location.reload();
-    }
-
-    function play(id) {
-        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: id, modoApresentacao: true }));
+        alert("Enviado com sucesso!");
         location.reload();
     }
 
-    function mostrarRanking() {
-        avaliacoesGlobais.sort((a,b) => b.total - a.total);
-        const top = avaliacoesGlobais.slice(0, 10);
-        document.getElementById('displayArea').innerHTML = `
-            <div style="background:white; padding:20px; border-radius:12px;">
-                <h3 style="color:var(--azul)">Top 10 Geral - Sincronizado</h3>
-                <canvas id="chartRanking" style="max-height:300px; margin-bottom:20px;"></canvas>
-                <button onclick="location.reload()" style="padding:10px; cursor:pointer; background:var(--azul); color:white; border:none; border-radius:6px;">Voltar</button>
-            </div>`;
-        new Chart(document.getElementById('chartRanking'), { type: 'bar', data: { labels: top.map(t => "ID "+t.id), datasets: [{ label: 'Pontos', data: top.map(t => t.total), backgroundColor: '#0054A6' }] }, options: { scales: { y: { min: 0, max: 100 } } } });
+    function filtrar() {
+        const t = document.getElementById('inputBusca')?.value.toLowerCase() || "";
+        const m = document.getElementById('fMod').value;
+        const p = document.getElementById('fPDF').value;
+        let cT=0, cE=0;
+        document.querySelectorAll("#corpoTabela tr").forEach(tr => {
+            const match = tr.innerText.toLowerCase().includes(t) && (m==='todos'||tr.getAttribute('data-mod')===m) && (p==='todos'||tr.getAttribute('data-pdf')===p);
+            tr.style.display = match ? "" : "none";
+            if(match) { cT++; if(tr.getAttribute('data-pdf')==='sim') cE++; }
+        });
+        document.getElementById('cTotal').innerText = cT;
+        document.getElementById('cEnviado').innerText = cE;
     }
 
-    carregarTudo();
+    function play(id) {
+        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", idSelecionado: id, modoApresentacao: true }));
+        location.reload();
+    }
+
+    function voltarParaAdmin() {
+        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", modoApresentacao: false }));
+        location.reload();
+    }
+
+    function sair() {
+        localStorage.removeItem('trabalhoAtivo');
+        window.location.href = "index.html";
+    }
+
+    inicializar();
 </script>
 </body>
 </html>
