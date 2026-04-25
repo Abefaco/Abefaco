@@ -3,185 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel CBEFC 2026</title>
+    <title>Sistema CBEFC 2026</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--fundo); padding-top: 80px; }
-        header { 
-            background: var(--branco); padding: 0 25px; height: 70px; position: fixed; top: 0; width: 100%; 
-            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box;
-        }
-        .container { max-width: 1350px; margin: 0 auto; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--fundo); padding-top: 80px; }
+        header { background: var(--branco); height: 70px; position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 10px; }
+        .pdf-wrapper { width: 100%; height: 80vh; background: #525659; border-radius: 8px; border: none; }
+        .btn-ui { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; }
         
-        /* Estilos Admin */
-        .controles-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; }
-        .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-        
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        /* Admin Styles */
+        .admin-controls { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .admin-controls input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex: 1; }
+        table { width: 100%; border-collapse: collapse; background: white; }
         th { background: var(--azul); color: white; padding: 12px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
-
-        .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; color: transparent; font-weight: bold; }
-        .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
-
-        /* Modal */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
-        
-        /* Botão de interrogação */
-        .help-icon { display: inline-block; width: 22px; height: 22px; background: #6c757d; color: white; border-radius: 50%; text-align: center; font-size: 14px; cursor: help; line-height: 22px; font-weight: bold; margin-left: 8px; position: relative; }
-        .help-icon:hover::after { content: attr(data-help); position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px; border-radius: 6px; width: 220px; font-size: 11px; z-index: 10; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .btn-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; transition: 0.3s; }
+        .btn-check.checked { background: var(--verde); border-color: var(--verde); position: relative; }
+        .btn-check.checked::after { content: 'L'; color: white; transform: scaleX(-1) rotate(-35deg); position: absolute; left: 6px; top: 2px; }
     </style>
 </head>
 <body>
 
 <header>
-    <img src="logo.png" alt="ABEFACO" style="height: 45px;">
-    <div id="identificacao" style="font-weight: bold; color: var(--azul);">A carregar...</div>
+    <img src="logo.png" alt="Logo" style="height: 40px;">
+    <div id="statusHeader" style="font-weight: bold; color: var(--azul);">A validar...</div>
     <div>
-        <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="voltarParaAdmin()">Painel Principal</button>
-        <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
+        <button id="btnVoltar" style="display:none; background:#666;" class="btn-ui" onclick="voltarAdmin()">Painel</button>
+        <button style="background:var(--vermelho); margin-left:10px;" class="btn-ui" onclick="sair()">Sair</button>
     </div>
 </header>
 
-<div class="container">
-    <div id="displayArea">Iniciando sistema...</div>
+<div class="container" id="mainContent">
+    <div style="text-align:center; margin-top: 100px;">
+        <h2>A carregar trabalho...</h2>
+        <p>Se demorar muito, verifique a sua ligação.</p>
+    </div>
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
-    let bancoDeDadosCompleto = {};
-    let dadosPlanilhaGlobal = [];
+    const CONFIG = {
+        script: "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec",
+        database: "database.csv"
+    };
 
-    // Recupera a sessão salva no login
-    const sessao = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    let sessao = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    if (!sessao) window.location.href = "index.html";
 
-    if (!sessao) { window.location.href = "index.html"; }
+    const idAtivo = sessao.modoApresentacao ? sessao.idSelecionado : sessao.Número;
+    const isAdmin = sessao.Número === "ADMIN" && !sessao.modoApresentacao;
 
-    // Inicia o processo
-    async function iniciar() {
-        // Busca notas globais
+    // 1. EXECUÇÃO IMEDIATA (Prioridade Máxima)
+    window.onload = () => {
+        if (!isAdmin) {
+            document.getElementById('statusHeader').innerText = "Trabalho ID: " + idAtivo;
+            if(sessao.modoApresentacao) document.getElementById('btnVoltar').style.display = "inline-block";
+            carregarVisualizador(idAtivo);
+        }
+        processarDados();
+    };
+
+    // 2. CARREGAR PDF (Sem depender de CSV ou Planilha)
+    function carregarVisualizador(id) {
+        const urlPDF = `posters/${id}.pdf`;
+        const container = document.getElementById('mainContent');
+
+        fetch(urlPDF, { method: 'HEAD' }).then(res => {
+            if (res.ok) {
+                container.innerHTML = `
+                    <iframe src="${urlPDF}?v=${Math.random()}" class="pdf-wrapper"></iframe>
+                `;
+            } else {
+                const forms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
+                container.innerHTML = `
+                    <div style="text-align:center; padding: 20px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px;">
+                        <h3>Arquivo não detetado na pasta /posters</h3>
+                        <p>ID: <b>${id}</b> | Por favor, submeta o PDF pelo formulário abaixo:</p>
+                        <iframe src="${forms}" width="100%" height="600px" style="border:none; background:white;"></iframe>
+                    </div>
+                `;
+            }
+        }).catch(() => {
+            container.innerHTML = `<iframe src="${urlPDF}" class="pdf-wrapper"></iframe>`;
+        });
+    }
+
+    // 3. PROCESSAR DADOS (Admin e Títulos)
+    async function processarDados() {
+        let notas = [];
         try {
-            const resp = await fetch(GOOGLE_SCRIPT_URL);
-            dadosPlanilhaGlobal = await resp.json();
-        } catch(e) { console.warn("Modo offline."); }
+            const resp = await fetch(CONFIG.script);
+            notas = await resp.json();
+        } catch(e) {}
 
-        // Carrega o CSV
-        Papa.parse("database.csv", {
+        Papa.parse(CONFIG.database, {
             download: true, header: true, skipEmptyLines: true,
-            complete: function(results) {
+            complete: (results) => {
                 results.data.forEach(row => { 
                     const id = String(row.Número).trim();
                     if(id) bancoDeDadosCompleto[id] = row; 
                 });
 
-                // Lógica de Direcionamento Simplificada
-                if (sessao.Número === "ADMIN" && !sessao.modoApresentacao) {
-                    document.getElementById('identificacao').innerText = "PAINEL ADMINISTRADOR";
-                    renderizarAdmin(results.data);
-                } else {
-                    const idFinal = sessao.modoApresentacao ? sessao.idSelecionado : sessao.Número;
-                    document.getElementById('identificacao').innerText = `ID: ${idFinal}`;
-                    if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
-                    renderizarTrabalho(idFinal);
+                if (isAdmin) {
+                    document.getElementById('statusHeader').innerText = "PAINEL ADMIN";
+                    renderizarAdmin(results.data, notas);
                 }
             }
         });
     }
 
-    // RENDERIZAÇÃO DO TRABALHO (PDF OU FORMULÁRIO)
-    function renderizarTrabalho(id) {
-        const area = document.getElementById('displayArea');
-        const trab = bancoDeDadosCompleto[id];
-        const titulo = trab ? trab.Título : "Trabalho ID " + id;
-        
-        area.innerHTML = `
-            <h2 id="txtTitulo" style="color:var(--azul); margin-bottom:15px; font-size:1.1rem;">${titulo}</h2>
-            <div id="containerPDF">Verificando arquivo...</div>
-        `;
-
-        const caminhoPDF = `posters/${id}.pdf`;
-
-        fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
-            if (res.ok) {
-                // PDF EXISTE -> ABRE
-                document.getElementById('containerPDF').innerHTML = `
-                    <iframe src="${caminhoPDF}" width="100%" height="750px" style="border:none; border-radius:8px; background:#525659;"></iframe>
-                `;
-            } else {
-                // PDF NÃO EXISTE -> ABRE FORMULÁRIO
-                const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
-                document.getElementById('containerPDF').innerHTML = `
-                    <div style="text-align:center; padding:25px; background:#fffbe6; border:1px solid #ffe58f; border-radius:8px;">
-                        <h3>Trabalho em Sincronização</h3>
-                        <p>O arquivo <b>${id}.pdf</b> não foi detectado. Submeta-o abaixo:</p>
-                        <iframe src="${linkForms}" width="100%" height="550px" style="border:none; background:white;"></iframe>
-                    </div>
-                `;
-            }
-        }).catch(() => {
-            // Fallback imediato
-            document.getElementById('containerPDF').innerHTML = `<iframe src="${caminhoPDF}" width="100%" height="750px"></iframe>`;
-        });
-    }
-
-    // INTERFACE DO ADMINISTRADOR
-    function renderizarAdmin(lista) {
-        const area = document.getElementById('displayArea');
-        area.innerHTML = `
-            <div class="controles-gestao">
-                <input type="text" id="inputBusca" onkeyup="filtrar()" placeholder="Pesquisar ID ou Título...">
-                <select id="fMod" onchange="filtrar()"><option value="todos">Modalidade</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
-                <select id="fSit" onchange="filtrar()"><option value="todos">Situação</option><option value="Aprovado">Aprovado</option></select>
+    function renderizarAdmin(lista, notas) {
+        const container = document.getElementById('mainContent');
+        container.innerHTML = `
+            <div class="admin-controls">
+                <input type="text" id="busca" onkeyup="filtrar()" placeholder="Procurar ID ou Título...">
+                <select id="fMod" onchange="filtrar()"><option value="todos">Todas Modalidades</option><option value="Oral">Oral</option><option value="e-Poster">e-Poster</option></select>
             </div>
-            <table>
-                <thead><tr><th>Presença</th><th>ID</th><th>Título</th><th>PDF</th><th>Ações</th></tr></thead>
-                <tbody id="corpoTabela"></tbody>
-            </table>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Pres.</th><th>ID</th><th>Título</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaCorpo"></tbody>
+                </table>
+            </div>
         `;
 
-        const tbody = document.getElementById('corpoTabela');
+        const tbody = document.getElementById('tabelaCorpo');
         lista.forEach(row => {
             const id = String(row.Número).trim();
             if(!id) return;
-            const info = dadosPlanilhaGlobal.find(a => a.id === id);
-            const presente = info ? info.presenca : false;
+            const nota = notas.find(n => n.id === id);
+            const presente = nota ? nota.presenca : false;
 
             const tr = document.createElement('tr');
             tr.setAttribute('data-mod', (row.modalidade || "").includes('Oral') ? 'Oral' : 'e-Poster');
-            tr.setAttribute('data-sit', (row.Situação || "").trim());
-
             tr.innerHTML = `
-                <td style="text-align:center;"><button id="check-${id}" class="btn-check ${presente ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
+                <td><div class="btn-check ${presente ? 'checked' : ''}" onclick="marcarPresenca('${id}')"></div></td>
                 <td><b>${id}</b></td>
-                <td>${row.Título}</td>
-                <td id="st-${id}">...</td>
-                <td id="acoes-${id}"></td>
+                <td>${row.Título || "Sem título"}</td>
+                <td>
+                    <button class="btn-ui" style="background:var(--verde)" onclick="play('${id}')">Play</button>
+                    ${presente ? `<button class="btn-ui" style="background:var(--azul); margin-left:5px;" onclick="avaliar('${id}')">Nota</button>` : ''}
+                </td>
             `;
             tbody.appendChild(tr);
-            
-            // Verifica status e bota botões
-            fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
-                const existe = res.ok;
-                document.getElementById('st-'+id).innerHTML = existe ? '<b style="color:green">Sim</b>' : '<b style="color:red">Não</b>';
-                let btns = "";
-                if(existe) btns += `<button onclick="play('${id}')" style="background:var(--verde); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Play</button>`;
-                if(presente) btns += `<button onclick="avaliar('${id}')" style="background:var(--azul); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-left:5px;">Avaliar</button>`;
-                document.getElementById('acoes-'+id).innerHTML = btns;
-            });
         });
     }
 
-    // Funções de Ação
-    async function togglePresenca(id) {
-        const btn = document.getElementById(`check-${id}`);
-        const novoStatus = !btn.classList.contains('checked');
-        try {
-            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "PRESENCA", id: id, status: novoStatus }) });
-            location.reload();
-        } catch(e) { alert("Erro de rede."); }
+    // FUNÇÕES DE BOTÃO
+    async function marcarPresenca(id) {
+        const payload = { tipo: "PRESENCA", id: id, status: true };
+        await fetch(CONFIG.script, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+        location.reload();
     }
 
     function play(id) {
@@ -189,27 +163,21 @@
         location.reload();
     }
 
-    function voltarParaAdmin() {
+    function voltarAdmin() {
         localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", modoApresentacao: false }));
         location.reload();
     }
 
-    function sair() {
-        localStorage.removeItem('trabalhoAtivo');
-        window.location.href = "index.html";
-    }
+    function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
 
     function filtrar() {
-        const t = document.getElementById('inputBusca')?.value.toLowerCase() || "";
-        const m = document.getElementById('fMod')?.value || "todos";
-        const s = document.getElementById('fSit')?.value || "todos";
-        document.querySelectorAll("tbody tr").forEach(l => {
-            let match = l.innerText.toLowerCase().includes(t) && (m==='todos'||l.getAttribute('data-mod')===m) && (s==='todos'||l.getAttribute('data-sit')===s);
-            l.style.display = match ? "" : "none";
+        const val = document.getElementById('busca').value.toLowerCase();
+        const mod = document.getElementById('fMod').value;
+        document.querySelectorAll("tbody tr").forEach(tr => {
+            const match = tr.innerText.toLowerCase().includes(val) && (mod === "todos" || tr.getAttribute('data-mod') === mod);
+            tr.style.display = match ? "" : "none";
         });
     }
-
-    iniciar();
 </script>
 </body>
 </html>
