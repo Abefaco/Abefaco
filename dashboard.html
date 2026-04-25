@@ -3,87 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel CBEFC 2026</title>
+    <title>Painel CBEFC 2026 - Gestão Total</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff;
-            --verde: #2e7d32; --vermelho: #d32f2f; --laranja: #f39c12;
-        }
+        :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --laranja: #ef6c00; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--fundo); padding-top: 80px; }
+        
         header { 
             background: var(--branco); padding: 0 25px; height: 70px; position: fixed; top: 0; width: 100%; 
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
         
-        /* Design do Painel Admin */
-        .controles-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .controles-gestao input, .controles-gestao select { padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
-        
+        /* Filtros e Cards */
+        .controles-gestao { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; font-size: 0.85rem; }
+
         .resumo-cards { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .card-mini { background: white; padding: 15px; border-radius: 8px; flex: 1; min-width: 150px; text-align: center; border-top: 4px solid var(--azul); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card-mini span { display: block; font-size: 1.5rem; font-weight: bold; color: var(--azul); }
+        .card-mini { background: white; padding: 12px; border-radius: 8px; flex: 1; min-width: 110px; text-align: center; border-top: 4px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .card-mini span { display: block; font-size: 1.2rem; font-weight: bold; color: var(--azul); }
+        .card-mini label { font-size: 0.6rem; color: #666; text-transform: uppercase; font-weight: bold; }
 
-        .table-container { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: var(--azul); color: white; padding: 15px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: var(--azul); color: white; padding: 12px; text-align: left; font-size: 0.8rem; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.8rem; }
 
-        /* Estilo do Botão de Ajuda (?) */
+        /* Botão Checklist */
+        .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; color: transparent; font-weight: bold; display: inline-block; vertical-align: middle; }
+        .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; text-align: center; line-height: 18px; }
+
+        /* Ajuda (?) com Tooltip Corrigido */
         .help-icon {
-            display: inline-block; width: 18px; height: 18px; background: #adb5bd; color: white;
-            border-radius: 50%; text-align: center; font-size: 12px; cursor: pointer; line-height: 18px;
-            font-weight: bold; position: relative; margin-left: 5px; vertical-align: middle;
+            display: inline-block; width: 16px; height: 16px; background: #adb5bd; color: white;
+            border-radius: 50%; text-align: center; font-size: 10px; cursor: help; line-height: 16px;
+            font-weight: bold; position: relative; margin-left: 4px;
         }
         .help-icon:hover::after {
-            content: attr(data-help); position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
-            background: #333; color: white; padding: 10px; border-radius: 6px; width: 220px;
-            font-size: 11px; font-weight: normal; z-index: 9999; line-height: 1.4; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            content: attr(data-help); position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 8px; border-radius: 4px; width: 200px; font-weight: normal; z-index: 9999;
         }
 
-        /* Modal de Avaliação Moderno */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 20px; box-sizing: border-box; }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        .modal-content h3 { margin-top: 0; color: var(--azul); border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        
-        .criterio-row { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #f9f9f9; }
-        .criterio-row label { display: block; font-weight: 600; margin-bottom: 8px; color: #444; }
-        .criterio-row input[type="range"] { width: 80%; cursor: pointer; }
-        .score-val { font-weight: bold; color: var(--verde); float: right; font-size: 1.1rem; }
-
-        .btn-enviar { background: var(--verde); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 10px; }
-        .btn-cancelar { background: #eee; color: #666; border: none; padding: 10px; border-radius: 8px; width: 100%; margin-top: 10px; cursor: pointer; }
+        /* Modal de Avaliação */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .criterio-row { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .criterio-row label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--azul); }
+        .score-val { float: right; font-weight: bold; color: var(--verde); font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
 <header>
     <img src="logo.png" alt="ABEFACO" style="height: 45px;">
-    <div id="identificacao" style="font-weight: bold; color: var(--azul);">SESSÃO ADMIN</div>
-    <button onclick="localStorage.removeItem('trabalhoAtivo'); window.location.href='index.html'" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Sair</button>
+    <div id="identificacao" style="font-weight: bold; color: var(--azul);"></div>
+    <div>
+        <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="voltarParaAdmin()">Voltar ao Painel</button>
+        <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
+    </div>
 </header>
 
 <div class="container">
-    <div class="card-info"><h2 id="txtTitulo" class="titulo-principal">Painel de Avaliação Sincronizado</h2></div>
+    <div class="card-info"><h2 id="txtTitulo" class="titulo-principal">Carregando Dados...</h2></div>
     <div id="displayArea"></div>
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "SUA_URL_AQUI"; // MESMA URL DA IMPLANTAÇÃO
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
     let bancoDeDadosCompleto = {};
-    let avaliacoesGlobais = []; // Notas lidas da planilha
+    let avaliacoesGlobais = [];
     const dadosAtivos = JSON.parse(localStorage.getItem('trabalhoAtivo'));
 
-    async function carregarDados() {
-        // 1. Lê as avaliações da Planilha
+    if (!dadosAtivos) { window.location.href = "index.html"; }
+
+    const area = document.getElementById('displayArea');
+    const txtTitulo = document.getElementById('txtTitulo');
+    const identificacao = document.getElementById('identificacao');
+
+    async function carregarTudo() {
+        // Sincroniza notas da planilha para o ranking e filtros
         try {
             const resp = await fetch(GOOGLE_SCRIPT_URL);
             avaliacoesGlobais = await resp.json();
-        } catch(e) { console.log("Erro ao sincronizar notas globais"); }
+        } catch(e) { console.error("Erro na sincronização global."); }
 
-        // 2. Carrega o CSV dos Trabalhos
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
@@ -91,138 +99,221 @@
                     const id = String(row.Número).trim();
                     if(id) bancoDeDadosCompleto[id] = row; 
                 });
-                renderizarPainelAdmin(results.data);
+
+                // VERIFICAÇÃO DE PERFIL - CORREÇÃO DO BUG DE LOGIN
+                // O administrador só entra aqui se o Numero for exatamente "ADMIN"
+                if (dadosAtivos.Número === "ADMIN" && !dadosAtivos.modoApresentacao) {
+                    identificacao.innerText = "SESSÃO: ADMINISTRADOR (ABEFACO)";
+                    renderizarPainelAdmin(results.data);
+                } else {
+                    identificacao.innerText = `ID: ${dadosAtivos.Número}`;
+                    if(dadosAtivos.Número === "ADMIN") document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
+                    renderizarTrabalhoSolo(dadosAtivos.Número);
+                }
+            }
+        });
+    }
+
+    function renderizarTrabalhoSolo(id) {
+        const trabalho = bancoDeDadosCompleto[id];
+        if(!trabalho) {
+            area.innerHTML = "<div style='padding:20px;'>Erro: Trabalho não localizado. Verifique o ID.</div>";
+            return;
+        }
+        txtTitulo.innerText = trabalho.Título;
+        const caminhoPDF = `posters/${id}.pdf`;
+
+        fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
+            if (res.ok) {
+                area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0" style="width:100%; height:75vh; border:none;"></iframe>`;
+            } else {
+                const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
+                area.innerHTML = `<div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%;">
+                    <h3>Trabalho Sincronizando...</h3>
+                    <p>O arquivo PDF não foi detectado. Submeta pelo formulário abaixo se necessário:</p>
+                    <iframe src="${linkForms}" style="width: 100%; max-width: 800px; height: 500px; border: 1px solid #ccc; background: white;"></iframe>
+                </div>`;
             }
         });
     }
 
     function renderizarPainelAdmin(lista) {
-        let html = `
+        txtTitulo.innerText = "Gestão Geral de Trabalhos CBEFC 2026";
+        area.innerHTML = `
             <div class="controles-gestao">
-                <input type="text" id="inputBusca" onkeyup="aplicarFiltros()" placeholder="Pesquisar ID ou Título...">
-                <select id="filtroMod" onchange="aplicarFiltros()"><option value="todos">Todas Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
-                <select id="filtroAval" onchange="aplicarFiltros()"><option value="todos">Status Avaliação</option><option value="sim">Avaliados</option><option value="nao">Não Avaliados</option></select>
-                <button onclick="mostrarRankingSincronizado()" style="background:var(--verde); color:white; border:none; border-radius:6px; padding:10px; cursor:pointer;">Ver Ranking Planilha</button>
+                <input type="text" id="inputBusca" onkeyup="filtrar()" placeholder="Buscar ID ou Título...">
+                <select id="fMod" onchange="filtrar()"><option value="todos">Todas Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Com. Oral</option></select>
+                <select id="fSit" onchange="filtrar()"><option value="todos">Todas Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
+                <select id="fPDF" onchange="filtrar()"><option value="todos">Status PDF</option><option value="sim">Enviado</option><option value="nao">Pendente</option></select>
+                <select id="fAval" onchange="filtrar()"><option value="todos">Status Nota</option><option value="sim">Avaliado</option><option value="nao">Pendente</option></select>
+                <button onclick="mostrarRanking()" style="background:var(--azul); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Ver Ranking</button>
             </div>
             <div class="resumo-cards">
-                <div class="card-mini"><span>${lista.length}</span><label>Trabalhos</label></div>
-                <div class="card-mini"><span>${avaliacoesGlobais.length}</span><label>Notas na Planilha</label></div>
+                <div class="card-mini" style="border-top-color: var(--azul)"><label>Trabalhos</label><span id="cTotal">0</span></div>
+                <div class="card-mini" style="border-top-color: var(--verde)"><label>Enviados (PDF)</label><span id="cEnviado">0</span></div>
+                <div class="card-mini" style="border-top-color: orange"><label>Avaliados (Global)</label><span id="cAval">0</span></div>
             </div>
             <div class="table-container"><table>
-                <thead><tr><th>ID</th><th>Título</th><th>Status</th><th>Ação</th></tr></thead>
+                <thead><tr><th>Pres.</th><th>ID</th><th>Título / Autores</th><th>PDF</th><th>Ações</th></tr></thead>
                 <tbody id="corpoTabela"></tbody>
             </table></div>`;
-        document.getElementById('displayArea').innerHTML = html;
 
+        const tbody = document.getElementById('corpoTabela');
         lista.forEach(row => {
             const id = String(row.Número).trim();
+            if(!id) return;
+
             const foiAvaliado = avaliacoesGlobais.some(a => a.id === id);
-            
+            const pres = localStorage.getItem(`pres-${id}`) === 'true';
+            const mod = (row.modalidade || "").toLowerCase().includes('oral') ? 'Oral' : 'e-Poster';
+
             const tr = document.createElement('tr');
+            tr.setAttribute('data-mod', mod);
+            tr.setAttribute('data-sit', (row.Situação || "").trim());
             tr.setAttribute('data-aval', foiAvaliado ? 'sim' : 'nao');
-            tr.setAttribute('data-mod', (row.modalidade || "").includes('Oral') ? 'Oral' : 'e-Poster');
-            
+            tr.setAttribute('data-pdf', 'verificando');
+
             tr.innerHTML = `
+                <td style="text-align:center;"><button id="check-${id}" class="btn-check ${pres ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
                 <td><b>${id}</b></td>
-                <td>${row.Título}</td>
-                <td>${foiAvaliado ? '<b style="color:green">Avaliado</b>' : '<b style="color:gray">Pendente</b>'}</td>
-                <td><button onclick="abrirAvaliacao('${id}')" style="background:var(--azul); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">Avaliar</button></td>`;
-            document.getElementById('corpoTabela').appendChild(tr);
+                <td><div style="font-weight:bold;">${row.Título}</div><small style="color:#777;">${row.Autores}</small></td>
+                <td id="st-${id}">...</td>
+                <td id="acoes-${id}"></td>`;
+            
+            tbody.appendChild(tr);
+            verificarPDF(id, tr);
         });
-        aplicarFiltros();
     }
 
-    function abrirAvaliacao(id) {
+    function verificarPDF(id, tr) {
+        fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
+            const st = document.getElementById('st-'+id);
+            const ac = document.getElementById('acoes-'+id);
+            if(res.ok) {
+                tr.setAttribute('data-pdf', 'sim');
+                st.innerHTML = '<b style="color:green">Sim</b>';
+                ac.innerHTML = `
+                    <button onclick="play('${id}')" style="background:var(--verde); color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">Play</button>
+                    <button onclick="avaliar('${id}')" style="background:var(--azul); color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; margin-left:4px;">Nota</button>`;
+            } else {
+                tr.setAttribute('data-pdf', 'nao');
+                st.innerHTML = '<b style="color:red">Não</b>';
+                ac.innerHTML = `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" style="font-size:10px; color:var(--azul); font-weight:bold;">SUBIR ARQUIVO</a>`;
+            }
+            filtrar();
+        });
+    }
+
+    function filtrar() {
+        const termo = document.getElementById('inputBusca')?.value.toLowerCase() || "";
+        const mod = document.getElementById('fMod')?.value || "todos";
+        const sit = document.getElementById('fSit')?.value || "todos";
+        const pdf = document.getElementById('fPDF')?.value || "todos";
+        const aval = document.getElementById('fAval')?.value || "todos";
+        
+        let t=0, e=0, a=0;
+        document.querySelectorAll("#corpoTabela tr").forEach(l => {
+            let match = l.innerText.toLowerCase().includes(termo) && 
+                        (mod==='todos'||l.getAttribute('data-mod')===mod) &&
+                        (sit==='todos'||l.getAttribute('data-sit')===sit) &&
+                        (pdf==='todos'||l.getAttribute('data-pdf')===pdf) &&
+                        (aval==='todos'||l.getAttribute('data-aval')===aval);
+            
+            l.style.display = match ? "" : "none";
+            if(match) { t++; if(l.getAttribute('data-pdf')==='sim') e++; if(l.getAttribute('data-aval')==='sim') a++; }
+        });
+        if(document.getElementById('cTotal')) document.getElementById('cTotal').innerText = t;
+        if(document.getElementById('cEnviado')) document.getElementById('cEnviado').innerText = e;
+        if(document.getElementById('cAval')) document.getElementById('cAval').innerText = a;
+    }
+
+    function avaliar(id) {
         const modal = document.createElement('div');
-        modal.className = 'modal'; modal.id = 'modalAval';
+        modal.className = 'modal'; modal.id = 'mNota';
         modal.innerHTML = `
             <div class="modal-content">
-                <h3>Avaliar Trabalho: ${id}</h3>
-                <div class="criterio-row">
-                    <label>Avaliador:</label>
-                    <input type="text" id="nomeAv" placeholder="Seu nome" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
-                </div>
+                <h3 style="margin-top:0; color:var(--azul)">Avaliar ID: ${id}</h3>
+                <label>Avaliador:</label><input type="text" id="avNome" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px">
                 
                 <div class="criterio-row">
-                    <label>1. Relevância (20) <span class="help-icon" data-help="Contribuição para saúde da família e enfermagem.">?</span></label>
+                    <label>1. Relevância (20) <span class="help-icon" data-help="O tema é relevante para a saúde da família e enfermagem?">?</span></label>
                     <input type="range" id="c1" min="0" max="20" value="0" oninput="v1.innerText=this.value"> <span class="score-val" id="v1">0</span>
                 </div>
-
                 <div class="criterio-row">
-                    <label>2. Metodologia (10) <span class="help-icon" data-help="Adequação aos objetivos e validade.">?</span></label>
+                    <label>2. Metodologia (10) <span class="help-icon" data-help="Adequação aos objetivos e validade dos resultados.">?</span></label>
                     <input type="range" id="c2" min="0" max="10" value="0" oninput="v2.innerText=this.value"> <span class="score-val" id="v2">0</span>
                 </div>
-
                 <div class="criterio-row">
-                    <label>3. Visual (10) <span class="help-icon" data-help="Organização, clareza e adequação ao modelo.">?</span></label>
+                    <label>3. Visual (10) <span class="help-icon" data-help="Trabalho adequado ao modelo e conteúdo claro.">?</span></label>
                     <input type="range" id="c3" min="0" max="10" value="0" oninput="v3.innerText=this.value"> <span class="score-val" id="v3">0</span>
                 </div>
-
                 <div class="criterio-row">
                     <label>4. Oral (10) <span class="help-icon" data-help="Linguagem clara, objetiva e domínio do tema.">?</span></label>
                     <input type="range" id="c4" min="0" max="10" value="0" oninput="v4.innerText=this.value"> <span class="score-val" id="v4">0</span>
                 </div>
-
                 <div class="criterio-row">
                     <label>5. Aplicabilidade (20) <span class="help-icon" data-help="Resultados aplicáveis na prática clínica.">?</span></label>
                     <input type="range" id="c5" min="0" max="20" value="0" oninput="v5.innerText=this.value"> <span class="score-val" id="v5">0</span>
                 </div>
-
                 <div class="criterio-row">
                     <label>6. Originalidade (20) <span class="help-icon" data-help="Ideias originais ou nova perspectiva.">?</span></label>
                     <input type="range" id="c6" min="0" max="20" value="0" oninput="v6.innerText=this.value"> <span class="score-val" id="v6">0</span>
                 </div>
-
                 <div class="criterio-row">
-                    <label>7. Presença (10) <span class="help-icon" data-help="Presença no local e dia determinado.">?</span></label>
+                    <label>7. Presença (10) <span class="help-icon" data-help="Compareceu no dia e local determinado.">?</span></label>
                     <input type="range" id="c7" min="0" max="10" value="0" oninput="v7.innerText=this.value"> <span class="score-val" id="v7">0</span>
                 </div>
 
-                <label>Observações:</label>
-                <textarea id="obs" style="width:100%; border-radius:6px; border:1px solid #ddd; padding:10px; margin-top:5px;"></textarea>
-                
-                <button class="btn-enviar" onclick="salvarParaPlanilha('${id}')">ENVIAR PARA PLANILHA GLOBAL</button>
-                <button class="btn-cancelar" onclick="modalAval.remove()">Cancelar</button>
+                <label>Observações:</label><textarea id="avObs" style="width:100%; height:60px; border-radius:6px; border:1px solid #ddd; padding:10px"></textarea>
+                <button onclick="enviarParaPlanilha('${id}')" style="width:100%; background:var(--verde); color:white; border:none; padding:15px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px">SALVAR GLOBALMENTE</button>
+                <button onclick="mNota.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Fechar</button>
             </div>`;
         document.body.appendChild(modal);
     }
 
-    async function salvarParaPlanilha(id) {
+    async function enviarParaPlanilha(id) {
         const total = Number(c1.value)+Number(c2.value)+Number(c3.value)+Number(c4.value)+Number(c5.value)+Number(c6.value)+Number(c7.value);
-        const dados = { id, avaliador: nomeAv.value, c1: c1.value, c2: c2.value, c3: c3.value, c4: c4.value, c5: c5.value, c6: c6.value, c7: c7.value, total, obs: obs.value };
+        const dados = { id, avaliador: avNome.value, c1:c1.value, c2:c2.value, c3:c3.value, c4:c4.value, c5:c5.value, c6:c6.value, c7:c7.value, obs: avObs.value, total };
         
-        document.querySelector(".btn-enviar").innerText = "ENVIANDO...";
-        await fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify(dados) });
-        alert("Avaliação salva na nuvem!");
+        await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
+        alert("Avaliação sincronizada com sucesso!");
         location.reload();
     }
 
-    function mostrarRankingSincronizado() {
-        avaliacoesGlobais.sort((a,b) => b.total - a.total);
-        const top = avaliacoesGlobais.slice(0, 10);
-        
-        let rankHtml = `<div style="background:white; padding:20px; border-radius:12px;">
-            <h3>Top 10 Melhores Notas (Planilha)</h3>
-            <table style="width:100%">
-                ${top.map((t, i) => `<tr><td>${i+1}º</td><td>ID ${t.id}</td><td><b>${t.total} pts</b></td><td>Aval: ${t.avaliador}</td></tr>`).join('')}
-            </table>
-            <button onclick="location.reload()" style="margin-top:20px; padding:10px; cursor:pointer;">Voltar</button>
-        </div>`;
-        document.getElementById('displayArea').innerHTML = rankHtml;
+    function togglePresenca(id) {
+        const btn = document.getElementById(`check-${id}`);
+        localStorage.setItem(`pres-${id}`, btn.classList.toggle('checked'));
     }
 
-    function aplicarFiltros() {
-        const termo = document.getElementById("inputBusca").value.toLowerCase();
-        const aval = document.getElementById("filtroAval").value;
-        const mod = document.getElementById("filtroMod").value;
-        const linhas = document.querySelectorAll("#corpoTabela tr");
-        linhas.forEach(l => {
-            let match = l.innerText.toLowerCase().includes(termo) && (aval==='todos'||l.getAttribute('data-aval')===aval) && (mod==='todos'||l.getAttribute('data-mod')===mod);
-            l.style.display = match ? "" : "none";
+    function play(id) {
+        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: id, modoApresentacao: true }));
+        location.reload();
+    }
+
+    function voltarParaAdmin() {
+        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", modoApresentacao: false }));
+        location.reload();
+    }
+
+    function mostrarRanking() {
+        avaliacoesGlobais.sort((a,b) => b.total - a.total);
+        const top = avaliacoesGlobais.slice(0, 10);
+        area.innerHTML = `
+            <div style="background:white; padding:20px; border-radius:12px;">
+                <h3 style="color:var(--azul)">Top 10 Geral - Sincronizado</h3>
+                <canvas id="chartRanking" style="max-height:300px; margin-bottom:20px;"></canvas>
+                <button onclick="location.reload()" style="padding:10px; cursor:pointer; background:var(--azul); color:white; border:none; border-radius:6px;">Voltar</button>
+            </div>`;
+        new Chart(document.getElementById('chartRanking'), {
+            type: 'bar',
+            data: { labels: top.map(t => "ID "+t.id), datasets: [{ label: 'Pontos', data: top.map(t => t.total), backgroundColor: '#0054A6' }] },
+            options: { scales: { y: { min: 0, max: 100 } } }
         });
     }
 
-    carregarDados();
+    function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
+
+    carregarTudo();
 </script>
 </body>
 </html>
