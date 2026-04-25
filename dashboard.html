@@ -17,178 +17,149 @@
 
         .container { max-width: 1350px; margin: 0 auto; padding: 20px; }
         
-        /* Controles Admin */
+        /* Controles de Filtro */
         .controles-gestao { 
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
             gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; font-size: 0.85rem; }
 
-        .resumo-cards { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .card-mini { background: white; padding: 12px; border-radius: 8px; flex: 1; min-width: 110px; text-align: center; border-top: 4px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card-mini span { display: block; font-size: 1.2rem; font-weight: bold; color: var(--azul); }
-        .card-mini label { font-size: 0.6rem; color: #666; text-transform: uppercase; font-weight: bold; }
-
-        /* Tabela */
         .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: var(--azul); color: white; padding: 12px; text-align: left; font-size: 0.8rem; }
-        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.8rem; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th { background: var(--azul); color: white; padding: 12px; text-align: left; font-size: 0.85rem; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
 
-        .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; color: transparent; font-weight: bold; line-height: 20px; text-align: center; }
+        /* Botões */
+        .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; color: transparent; font-weight: bold; line-height: 22px; text-align: center; transition: 0.3s; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
+        .btn-play { background: var(--verde); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-avaliar { background: var(--azul); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
 
-        .btn-play { background: var(--verde); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-avaliar { background: var(--azul); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
-
-        /* Modal */
+        /* Modal de Avaliação */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
-        .criterio-row { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .criterio-row label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--azul); }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
+        .criterio-row { margin-bottom: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .criterio-row label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--azul); font-size: 1rem; }
+        .score-val { float: right; font-weight: bold; color: var(--verde); font-size: 1.2rem; }
+        
+        iframe { width: 100%; height: 80vh; border: none; border-radius: 8px; background: #525659; }
     </style>
 </head>
 <body>
 
 <header>
     <img src="logo.png" alt="ABEFACO" style="height: 45px;">
-    <div id="identificacao" style="font-weight: bold; color: var(--azul);">A VALIDAR...</div>
+    <div id="identificacao" style="font-weight: bold; color: var(--azul);">AUTENTICANDO...</div>
     <div>
-        <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="voltarParaAdmin()">Voltar ao Painel</button>
+        <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="voltarParaAdmin()">Painel Principal</button>
         <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
     </div>
 </header>
 
-<div class="container">
-    <div id="displayArea">Carregando informações...</div>
+<div class="container" id="areaConteudo">
+    <div style="text-align:center; padding-top:100px;">Carregando banco de dados unificado...</div>
 </div>
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
     let bancoDeDadosCompleto = {};
-    let avaliacoesGlobais = [];
     const sessao = JSON.parse(localStorage.getItem('trabalhoAtivo'));
 
-    // CORREÇÃO DO LOOP: Apenas verifica se existe sessão. Não barra se não for ADMIN.
     if (!sessao) { window.location.href = "index.html"; }
 
-    async function inicializar() {
-        // Puxa avaliações da nuvem (Google)
-        try {
-            const resp = await fetch(GOOGLE_SCRIPT_URL);
-            avaliacoesGlobais = await resp.json();
-        } catch(e) { console.error("Planilha offline."); }
+    // Garante que o ID da sessão seja String para evitar erros de comparação
+    const idSessao = sessao.Número ? String(sessao.Número).trim() : "";
 
-        // Puxa o banco de dados CSV
+    window.onload = () => {
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
+                // Mapeia o CSV garantindo que o ID (Número) seja a chave
                 results.data.forEach(row => { 
-                    const id = String(row.Número).trim();
-                    if(id) bancoDeDadosCompleto[id] = row; 
+                    const idTrabalho = row.Número ? String(row.Número).trim() : null;
+                    if(idTrabalho) bancoDeDadosCompleto[idTrabalho] = row; 
                 });
-
-                decidirVisualizacao(results.data);
+                
+                direcionarFluxo(results.data);
             }
         });
-    }
+    };
 
-    function decidirVisualizacao(listaCSV) {
-        const area = document.getElementById('displayArea');
+    function direcionarFluxo(listaCSV) {
+        const ident = document.getElementById('identificacao');
         
-        // Se for ADMIN e não estiver vendo um trabalho específico
-        if (sessao.Número === "ADMIN" && !sessao.modoApresentacao) {
-            document.getElementById('identificacao').innerText = "PAINEL ADMINISTRATIVO";
+        // Se for ADMIN e não estiver em modo de apresentação de um ID específico
+        if (idSessao === "ADMIN" && !sessao.modoApresentacao) {
+            ident.innerText = "SESSÃO: ADMINISTRADOR";
             renderizarPainelAdmin(listaCSV);
         } else {
-            // Se for um ID de autor OU Admin em modo apresentação
-            const idAlvo = sessao.modoApresentacao ? sessao.idSelecionado : sessao.Número;
-            document.getElementById('identificacao').innerText = "TRABALHO ID: " + idAlvo;
+            // Se for login de ID comum ou ADMIN em modo "Play"
+            const idAlvo = sessao.modoApresentacao ? String(sessao.idSelecionado).trim() : idSessao;
+            ident.innerText = "TRABALHO ID: " + idAlvo;
             
             if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
             
-            renderizarVisualizacaoSolo(idAlvo);
+            renderizarPosterSolo(idAlvo);
         }
     }
 
-    function renderizarVisualizacaoSolo(id) {
-        const area = document.getElementById('displayArea');
+    function renderizarPosterSolo(id) {
+        const area = document.getElementById('areaConteudo');
         const trab = bancoDeDadosCompleto[id];
-        const titulo = trab ? trab.Título : "Trabalho " + id;
+        // Proteção contra undefined: se o ID não estiver no CSV, mostra o número
+        const titulo = (trab && trab.Título) ? trab.Título : "Trabalho " + id;
         const caminhoPDF = `posters/${id}.pdf`;
 
         area.innerHTML = `
             <h2 style="color:var(--azul); margin-bottom:20px;">${titulo}</h2>
-            <div id="pdfWrapper">Verificando arquivo...</div>`;
+            <div id="pdfBox">Verificando arquivo no servidor...</div>`;
 
         fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
             if (res.ok) {
-                document.getElementById('pdfWrapper').innerHTML = `
-                    <iframe src="${caminhoPDF}" width="100%" height="800px" style="border:none; background:#525659; border-radius:8px;"></iframe>`;
+                document.getElementById('pdfBox').innerHTML = `<iframe src="${caminhoPDF}"></iframe>`;
             } else {
                 const forms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
-                document.getElementById('pdfWrapper').innerHTML = `
+                document.getElementById('pdfBox').innerHTML = `
                     <div style="text-align:center; padding:30px; background:#fffbe6; border:1px solid #ffe58f; border-radius:10px;">
-                        <h3>PDF não localizado</h3>
-                        <p>O arquivo <b>${id}.pdf</b> não foi encontrado. Você pode submetê-lo abaixo:</p>
-                        <iframe src="${forms}" width="100%" height="550px" style="border:none; background:white;"></iframe>
+                        <h3 style="color:#856404;">PDF não localizado na pasta /posters</h3>
+                        <p>O arquivo <b>${id}.pdf</b> não foi encontrado.</p>
+                        <iframe src="${forms}" style="width:100%; height:550px; background:white; border:none;"></iframe>
                     </div>`;
             }
+        }).catch(() => {
+            document.getElementById('pdfBox').innerHTML = `<iframe src="${caminhoPDF}"></iframe>`;
         });
     }
 
     function renderizarPainelAdmin(lista) {
-        document.getElementById('displayArea').innerHTML = `
+        const area = document.getElementById('areaConteudo');
+        area.innerHTML = `
             <div class="controles-gestao">
-                <input type="text" id="inputBusca" onkeyup="filtrar()" placeholder="Buscar ID ou Título...">
-                <select id="fMod" onchange="filtrar()"><option value="todos">Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
-                <select id="fPDF" onchange="filtrar()"><option value="todos">Status PDF</option><option value="sim">Enviado</option><option value="nao">Pendente</option></select>
-                <button onclick="mostrarRanking()" style="background:var(--azul); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Ver Ranking</button>
-            </div>
-            <div class="resumo-cards">
-                <div class="card-mini" style="border-top-color: var(--azul)"><label>Trabalhos</label><span id="cTotal">0</span></div>
-                <div class="card-mini" style="border-top-color: var(--verde)"><label>Enviados (PDF)</label><span id="cEnviado">0</span></div>
-                <div class="card-mini" style="border-top-color: orange"><label>Avaliados (Global)</label><span id="cAval">0</span></div>
+                <input type="text" id="busca" onkeyup="filtrar()" placeholder="Buscar ID ou Título...">
+                <select id="fMod" onchange="filtrar()"><option value="todos">Todas Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
             </div>
             <div class="table-container"><table>
                 <thead><tr><th>Presença</th><th>ID</th><th>Título</th><th>PDF</th><th>Ações</th></tr></thead>
-                <tbody id="corpoTabela"></tbody>
+                <tbody id="tabelaAdmin"></tbody>
             </table></div>`;
 
-        const tbody = document.getElementById('corpoTabela');
+        const tbody = document.getElementById('tabelaAdmin');
         lista.forEach(row => {
-            const id = String(row.Número).trim();
+            const id = row.Número ? String(row.Número).trim() : null;
             if(!id) return;
-            const avaliado = avaliacoesGlobais.some(a => a.id === id);
             const presLocal = localStorage.getItem(`pres-${id}`) === 'true';
 
             const tr = document.createElement('tr');
-            tr.id = `tr-${id}`;
             tr.setAttribute('data-mod', (row.modalidade || "").includes('Oral') ? 'Oral' : 'e-Poster');
             
             tr.innerHTML = `
                 <td style="text-align:center;"><button id="check-${id}" class="btn-check ${presLocal ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
                 <td><b>${id}</b></td>
-                <td><div style="font-weight:bold">${row.Título}</div><small>${row.Autores}</small></td>
+                <td><div style="font-weight:bold;">${row.Título || "Título não definido"}</div><small>${row.Autores || ""}</small></td>
                 <td id="st-${id}">...</td>
                 <td id="acoes-${id}"></td>`;
-            
             tbody.appendChild(tr);
-            verificarPDFAdmin(id, tr, presLocal);
-        });
-    }
-
-    function verificarPDFAdmin(id, tr, estaPresente) {
-        fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
-            const existe = res.ok;
-            tr.setAttribute('data-pdf', existe ? 'sim' : 'nao');
-            document.getElementById('st-'+id).innerHTML = existe ? '<b style="color:green">Sim</b>' : '<b style="color:red">Não</b>';
-            
-            let html = "";
-            if(existe) html += `<button onclick="play('${id}')" class="btn-play">Play</button>`;
-            if(estaPresente) html += `<button onclick="avaliar('${id}')" class="btn-avaliar">Avaliar</button>`;
-            document.getElementById('acoes-'+id).innerHTML = html;
-            filtrar();
+            verificarStatusEBotao(id, presLocal);
         });
     }
 
@@ -200,64 +171,30 @@
         location.reload(); // Recarrega para aplicar a liberação do botão avaliar
     }
 
+    function verificarStatusEBotao(id, pres) {
+        fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
+            const existe = res.ok;
+            document.getElementById('st-'+id).innerHTML = existe ? '<b style="color:green">Sim</b>' : '<b style="color:red">Não</b>';
+            let html = "";
+            if(existe) html += `<button onclick="play('${id}')" class="btn-play">Play</button>`;
+            if(pres) html += `<button onclick="avaliar('${id}')" class="btn-avaliar">Avaliar</button>`;
+            document.getElementById('acoes-'+id).innerHTML = html;
+        });
+    }
+
     function avaliar(id) {
         const modal = document.createElement('div');
         modal.className = 'modal'; modal.id = 'mNota';
         modal.innerHTML = `
             <div class="modal-content">
-                <h3>Avaliando ID: ${id}</h3>
+                <h3>Avaliar ID: ${id}</h3>
                 <label>Avaliador:</label><input type="text" id="avNome" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px">
-                <div class="criterio-row"><label>Relevância (20)</label><input type="range" id="c1" min="0" max="20" value="0" oninput="v1.innerText=this.value"><span style="float:right" id="v1">0</span></div>
-                <div class="criterio-row"><label>Metodologia (10)</label><input type="range" id="c2" min="0" max="10" value="0" oninput="v2.innerText=this.value"><span style="float:right" id="v2">0</span></div>
-                <div class="criterio-row"><label>Visual (10)</label><input type="range" id="c3" min="0" max="10" value="0" oninput="v3.innerText=this.value"><span style="float:right" id="v3">0</span></div>
-                <div class="criterio-row"><label>Oral (10)</label><input type="range" id="c4" min="0" max="10" value="0" oninput="v4.innerText=this.value"><span style="float:right" id="v4">0</span></div>
-                <div class="criterio-row"><label>Aplicabilidade (20)</label><input type="range" id="c5" min="0" max="20" value="0" oninput="v5.innerText=this.value"><span style="float:right" id="v5">0</span></div>
-                <div class="criterio-row"><label>Originalidade (20)</label><input type="range" id="c6" min="0" max="20" value="0" oninput="v6.innerText=this.value"><span style="float:right" id="v6">0</span></div>
-                <div class="criterio-row"><label>Presença (10)</label><input type="range" id="c7" min="0" max="10" value="0" oninput="v7.innerText=this.value"><span style="float:right" id="v7">0</span></div>
-                <button onclick="salvarGlobal('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px">SALVAR NA PLANILHA GLOBAL</button>
-                <button onclick="mNota.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Cancelar</button>
-            </div>`;
-        document.body.appendChild(modal);
-    }
-
-    async function salvarGlobal(id) {
-        const total = Number(c1.value)+Number(c2.value)+Number(c3.value)+Number(c4.value)+Number(c5.value)+Number(c6.value)+Number(c7.value);
-        const dados = { id, avaliador: avNome.value, c1:c1.value, c2:c2.value, c3:c3.value, c4:c4.value, c5:c5.value, c6:c6.value, c7:c7.value, total, presenca: true };
-        await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
-        alert("Enviado com sucesso!");
-        location.reload();
-    }
-
-    function filtrar() {
-        const t = document.getElementById('inputBusca')?.value.toLowerCase() || "";
-        const m = document.getElementById('fMod').value;
-        const p = document.getElementById('fPDF').value;
-        let cT=0, cE=0;
-        document.querySelectorAll("#corpoTabela tr").forEach(tr => {
-            const match = tr.innerText.toLowerCase().includes(t) && (m==='todos'||tr.getAttribute('data-mod')===m) && (p==='todos'||tr.getAttribute('data-pdf')===p);
-            tr.style.display = match ? "" : "none";
-            if(match) { cT++; if(tr.getAttribute('data-pdf')==='sim') cE++; }
-        });
-        document.getElementById('cTotal').innerText = cT;
-        document.getElementById('cEnviado').innerText = cE;
-    }
-
-    function play(id) {
-        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", idSelecionado: id, modoApresentacao: true }));
-        location.reload();
-    }
-
-    function voltarParaAdmin() {
-        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", modoApresentacao: false }));
-        location.reload();
-    }
-
-    function sair() {
-        localStorage.removeItem('trabalhoAtivo');
-        window.location.href = "index.html";
-    }
-
-    inicializar();
-</script>
-</body>
-</html>
+                <div class="criterio-row"><label>Relevância (20)</label><input type="range" id="c1" min="0" max="20" value="0" oninput="v1.innerText=this.value"><span class="score-val" id="v1">0</span></div>
+                <div class="criterio-row"><label>Metodologia (10)</label><input type="range" id="c2" min="0" max="10" value="0" oninput="v2.innerText=this.value"><span class="score-val" id="v2">0</span></div>
+                <div class="criterio-row"><label>Visual (10)</label><input type="range" id="c3" min="0" max="10" value="0" oninput="v3.innerText=this.value"><span class="score-val" id="v3">0</span></div>
+                <div class="criterio-row"><label>Oral (10)</label><input type="range" id="c4" min="0" max="10" value="0" oninput="v4.innerText=this.value"><span class="score-val" id="v4">0</span></div>
+                <div class="criterio-row"><label>Aplicabilidade (20)</label><input type="range" id="c5" min="0" max="20" value="0" oninput="v5.innerText=this.value"><span class="score-val" id="v5">0</span></div>
+                <div class="criterio-row"><label>Originalidade (20)</label><input type="range" id="c6" min="0" max="20" value="0" oninput="v6.innerText=this.value"><span class="score-val" id="v6">0</span></div>
+                <div class="criterio-row"><label>Presença (10)</label><input type="range" id="c7" min="0" max="10" value="0" oninput="v7.innerText=this.value"><span class="score-val" id="v7">0</span></div>
+                <button onclick="salvarNotaGlobal('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px">SALVAR NA PLANILHA GLOBAL</button>
+                <button onclick="mNota.remove()" style="width:100%; background:#eee;
