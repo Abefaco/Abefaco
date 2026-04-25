@@ -9,7 +9,7 @@
     <style>
         :root {
             --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff;
-            --verde: #2e7d32; --vermelho: #d32f2f;
+            --verde: #2e7d32; --vermelho: #d32f2f; --laranja: #f39c12;
         }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--fundo); padding-top: 80px; }
         header { 
@@ -17,19 +17,28 @@
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box;
         }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .controles-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; }
+        
+        /* Estilos do Painel Admin */
+        .controles-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
         .resumo-cards { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .card-mini { background: white; padding: 12px; border-radius: 8px; flex: 1; min-width: 120px; border-top: 4px solid #ccc; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .card-mini { background: white; padding: 12px; border-radius: 8px; flex: 1; min-width: 130px; border-top: 4px solid #ccc; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .card-mini span { display: block; font-size: 1.3rem; font-weight: bold; color: var(--azul); }
+        .card-mini label { font-size: 0.65rem; color: #666; text-transform: uppercase; }
+
+        /* Tabela */
         .table-container { overflow-x: auto; background: white; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: var(--azul); color: white; padding: 15px; text-align: left; }
+        th { background: var(--azul); color: white; padding: 15px; text-align: left; font-size: 0.85rem; }
         td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        
+        /* Checklist */
         .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; color: transparent; font-weight: bold; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
-        .help-icon { display: inline-block; width: 16px; height: 16px; background: #999; color: white; border-radius: 50%; text-align: center; font-size: 11px; cursor: help; margin-left: 5px; line-height: 16px; position: relative; }
-        .help-icon:hover::after { content: attr(data-help); position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px; border-radius: 5px; width: 220px; z-index: 3000; font-weight: normal; font-size: 11px; }
+
+        /* Modal e Ajuda */
+        .help-icon { display: inline-block; width: 16px; height: 16px; background: #999; color: white; border-radius: 50%; text-align: center; font-size: 11px; cursor: help; margin-left: 5px; line-height: 16px; font-weight: bold; position: relative; }
+        .help-icon:hover::after { content: attr(data-help); position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px; border-radius: 5px; width: 220px; z-index: 3000; font-weight: normal; font-size: 11px; line-height: 1.4; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
         .score-box { font-weight: bold; color: var(--verde); float: right; }
@@ -47,7 +56,7 @@
 </header>
 
 <div class="container">
-    <div class="card-info"><h2 id="txtTitulo" class="titulo-principal">Carregando...</h2></div>
+    <div class="card-info"><h2 id="txtTitulo" class="titulo-principal">A carregar...</h2></div>
     <div id="displayArea"></div>
 </div>
 
@@ -62,7 +71,7 @@
     const txtTitulo = document.getElementById('txtTitulo');
     const identificacao = document.getElementById('identificacao');
 
-    // 1. Carrega o CSV e mapeia TUDO para a memória
+    // 1. Carregamento do CSV e mapeamento total
     Papa.parse("database.csv", {
         download: true, header: true, skipEmptyLines: true,
         complete: function(results) {
@@ -71,23 +80,26 @@
                 if(id) bancoDeDadosCompleto[id] = row;
             });
 
-            // 2. Decide a Visualização
+            // 2. Lógica de Visualização
             if (dadosAtivos.Número === "ADMIN" && !dadosAtivos.modoApresentacao) {
                 identificacao.innerText = "SESSÃO: ADMINISTRADOR";
                 renderizarPainelAdmin(results.data);
             } else {
-                identificacao.innerText = `ID: ${dadosAtivos.Número}`;
-                if(dadosAtivos.Número === "ADMIN") document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
+                // Se for ADMIN em modo play ou um Autor logado
+                identificacao.innerText = `TRABALHO ID: ${dadosAtivos.Número}`;
+                if(dadosAtivos.Número === "ADMIN" || dadosAtivos.modoApresentacao) {
+                    document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
+                }
                 renderizarTrabalhoSolo(dadosAtivos.Número);
             }
         }
     });
 
-    // FUNÇÃO QUE ABRE O TRABALHO (Ignora filtros, abre PDF ou Form de erro)
+    // ESTA É A FUNÇÃO QUE VOCÊ PERGUNTOU:
     function renderizarTrabalhoSolo(id) {
         const trabalho = bancoDeDadosCompleto[id];
         if(!trabalho) {
-            area.innerHTML = "<div style='padding:20px;'>Erro: ID não encontrado no banco de dados.</div>";
+            area.innerHTML = "<div style='padding:20px;'>ID não encontrado no banco de dados.</div>";
             return;
         }
         txtTitulo.innerText = trabalho.Título;
@@ -95,122 +107,100 @@
 
         fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
             if (res.ok) {
-                // Abre o PDF se existir
+                // CASO 1: PDF EXISTE -> Abre o visualizador
                 area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0&navpanes=0" style="width:100%; height:75vh; border:none;"></iframe>`;
             } else {
-                // Abre o formulário se o PDF não existir (Trabalho pendente)
+                // CASO 2: PDF NÃO EXISTE -> Abre o formulário de sincronização
                 const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
                 area.innerHTML = `
                     <div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%; box-sizing: border-box; overflow-y: auto;">
                         <h3 style="color: #856404; margin-top: 0;">Poster em Processamento</h3>
-                        <p style="color: #666; margin-bottom: 20px;">O arquivo PDF (ID ${id}) ainda não foi localizado no sistema.</p>
+                        <p style="color: #666; margin-bottom: 20px;">O ficheiro PDF para o ID <b>${id}</b> ainda não foi localizado. Pode submeter o ficheiro agora pelo formulário oficial:</p>
                         <iframe src="${linkForms}" style="width: 100%; max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px; background: white;"></iframe>
                     </div>`;
             }
         });
     }
 
-    // PAINEL DO ADMIN (Aqui sim aplicamos os filtros para sua gestão)
-    function renderizarPainelAdmin(listaCompleta) {
-        txtTitulo.innerText = "Gestão de e-Posters Aprovados";
+    function renderizarPainelAdmin(lista) {
+        txtTitulo.innerText = "Gestão Geral de Trabalhos";
         area.innerHTML = `
             <div class="controles-gestao">
-                <input type="text" id="inputBusca" onkeyup="aplicarFiltros()" placeholder="Buscar e-Poster...">
-                <select id="filtroAval" onchange="aplicarFiltros()"><option value="todos">Todos</option><option value="sim">Avaliados</option><option value="nao">Não Avaliados</option></select>
-                <button onclick="mostrarRanking()" style="background:var(--azul); color:white; border:none; border-radius:6px; cursor:pointer; padding:10px;">Ver Ranking</button>
+                <input type="text" id="inputBusca" onkeyup="aplicarFiltros()" placeholder="Procurar...">
+                <select id="filtroMod" onchange="aplicarFiltros()"><option value="todos">Todas Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Com. Oral</option></select>
+                <select id="filtroSit" onchange="aplicarFiltros()"><option value="todos">Todas Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
+                <button onclick="mostrarRanking()" style="background:var(--azul); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Ver Ranking</button>
             </div>
             <div class="resumo-cards">
-                <div class="card-mini" style="border-top-color: var(--azul)"><label>e-Posters</label><span id="countTotal">0</span></div>
+                <div class="card-mini" style="border-top-color: var(--azul)"><label>Trabalhos</label><span id="countTotal">0</span></div>
                 <div class="card-mini" style="border-top-color: orange"><label>Avaliados</label><span id="countAval">0</span></div>
             </div>
             <div class="table-container"><table>
-                <thead><tr><th style="width:50px;">Pres.</th><th>ID</th><th>Título</th><th>PDF</th><th>Ação</th></tr></thead>
+                <thead><tr><th>Pres.</th><th>ID</th><th>Título</th><th>PDF</th><th>Ação</th></tr></thead>
                 <tbody id="corpoTabela"></tbody>
             </table></div>`;
 
-        listaCompleta.forEach(row => {
+        lista.forEach(row => {
             const id = String(row.Número).trim();
-            const mod = (row.modalidade || "").toLowerCase().trim();
-            const sit = (row.Situação || "").toLowerCase().trim();
+            if(!id) return;
+            const mod = (row.modalidade || "").toLowerCase().includes('oral') ? 'Oral' : 'e-Poster';
+            const sit = (row.Situação || "").trim();
+            const aval = localStorage.getItem(`n-${id}`) ? 'sim' : 'nao';
+            const pres = localStorage.getItem(`pres-${id}`) === 'true';
 
-            // Filtro apenas visual para a tabela do Admin
-            if (id && mod.includes("poster") && sit === "aprovado") {
-                const avaliado = localStorage.getItem(`n-${id}`) ? 'sim' : 'nao';
-                const pres = localStorage.getItem(`pres-${id}`) === 'true';
-
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-aval', avaliado);
-                tr.setAttribute('data-pdf', 'pendente');
-                tr.innerHTML = `
-                    <td style="text-align:center;"><button id="check-${id}" class="btn-check ${pres ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
-                    <td><b>${id}</b></td>
-                    <td><div style="font-weight:bold;">${row.Título}</div><small>${row.Autores}</small></td>
-                    <td id="st-${id}">...</td>
-                    <td>
-                        <button onclick="iniciarApresentacaoAdmin('${id}')" style="background:var(--verde); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">Play</button>
-                        <button onclick="abrirAvaliacao('${id}')" style="background:var(--azul); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; margin-left:5px;">Avaliar</button>
-                    </td>`;
-                document.getElementById('corpoTabela').appendChild(tr);
-                verificarArquivo(id, tr);
-            }
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-mod', mod); tr.setAttribute('data-sit', sit); tr.setAttribute('data-aval', aval);
+            tr.innerHTML = `
+                <td style="text-align:center;"><button id="check-${id}" class="btn-check ${pres ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
+                <td><b>${id}</b></td>
+                <td><div style="font-weight:bold;">${row.Título}</div><small>${row.Autores}</small></td>
+                <td id="st-${id}">...</td>
+                <td>
+                    <button onclick="iniciarPlay('${id}')" style="background:var(--verde); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">Play</button>
+                    <button onclick="abrirAvaliacao('${id}')" style="background:var(--azul); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; margin-left:3px;">Nota</button>
+                </td>`;
+            document.getElementById('corpoTabela').appendChild(tr);
+            verificarArquivo(id);
         });
     }
 
-    // --- FUNÇÕES DE SUPORTE ---
+    // Suporte
     function aplicarFiltros() {
-        const termo = document.getElementById("inputBusca")?.value.toLowerCase() || "";
-        const aval = document.getElementById("filtroAval")?.value || "todos";
+        const t = document.getElementById("inputBusca")?.value.toLowerCase() || "";
+        const m = document.getElementById("filtroMod")?.value || "todos";
+        const s = document.getElementById("filtroSit")?.value || "todos";
         const linhas = document.querySelectorAll("#corpoTabela tr");
-        let t=0, a=0;
+        let total=0, aval=0;
         linhas.forEach(l => {
-            let match = l.innerText.toLowerCase().includes(termo) && (aval==='todos'||l.getAttribute('data-aval')===aval);
+            let match = l.innerText.toLowerCase().includes(t) && (m==='todos'||l.getAttribute('data-mod')===m) && (s==='todos'||l.getAttribute('data-sit')===s);
             l.style.display = match ? "" : "none";
-            if(match) { t++; if(l.getAttribute('data-aval')==='sim') a++; }
+            if(match) { total++; if(l.getAttribute('data-aval')==='sim') aval++; }
         });
-        if(document.getElementById('countTotal')) document.getElementById('countTotal').innerText = t;
-        if(document.getElementById('countAval')) document.getElementById('countAval').innerText = a;
+        document.getElementById('countTotal').innerText = total;
+        document.getElementById('countAval').innerText = aval;
     }
 
-    function verificarArquivo(id, tr) {
+    function verificarArquivo(id) {
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
-            const st = document.getElementById('st-'+id);
-            if(res.ok) { 
-                tr.setAttribute('data-pdf', 'enviado'); 
-                if(st) st.innerHTML = '<b style="color:green">Sim</b>'; 
-            } else { 
-                if(st) st.innerHTML = '<b style="color:red">Não</b>'; 
-            }
+            const el = document.getElementById('st-'+id);
+            if(el) el.innerHTML = res.ok ? '<b style="color:green">Sim</b>' : '<b style="color:red">Não</b>';
             aplicarFiltros();
         });
+    }
+
+    function iniciarPlay(id) {
+        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: id, modoApresentacao: true }));
+        location.reload();
+    }
+
+    function voltarParaAdmin() {
+        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", modoApresentacao: false }));
+        location.reload();
     }
 
     function togglePresenca(id) {
         const btn = document.getElementById(`check-${id}`);
         localStorage.setItem(`pres-${id}`, btn.classList.toggle('checked'));
-    }
-
-    function iniciarApresentacaoAdmin(id) {
-        const adminMode = { Número: id, modoApresentacao: true };
-        localStorage.setItem('trabalhoAtivo', JSON.stringify(adminMode));
-        location.reload();
-    }
-
-    function voltarParaAdmin() {
-        const resetAdmin = { Número: "ADMIN", modoApresentacao: false };
-        localStorage.setItem('trabalhoAtivo', JSON.stringify(resetAdmin));
-        location.reload();
-    }
-
-    async function salvarGSheets(id) {
-        const btn = document.getElementById("btnSend");
-        btn.innerText = "ENVIANDO..."; btn.disabled = true;
-        const total = Number(c1.value)+Number(c2.value)+Number(c3.value)+Number(c4.value)+Number(c5.value)+Number(c6.value)+Number(c7.value);
-        const dados = { id: id, avaliador: nomeAv.value, c1: c1.value, c2: c2.value, c3: c3.value, c4: c4.value, c5: c5.value, c6: c6.value, c7: c7.value, total: total };
-        try {
-            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
-            localStorage.setItem(`n-${id}`, JSON.stringify(dados));
-            alert("Sucesso!"); location.reload();
-        } catch (e) { alert("Erro!"); btn.disabled = false; }
     }
 
     function abrirAvaliacao(id) {
@@ -220,8 +210,8 @@
         modal.innerHTML = `
             <div class="modal-content">
                 <h3>Avaliar ID: ${id}</h3>
-                <label>Avaliador:</label><input type="text" id="nomeAv" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="Seu nome">
-                <label>1. Relevância (20) <span class="help-icon" data-help="Relevância para saúde da família e enfermagem.">?</span></label>
+                <label>Avaliador:</label><input type="text" id="nomeAv" style="width:100%; padding:8px; margin-bottom:10px;">
+                <label>1. Relevância (20) <span class="help-icon" data-help="Contribuição para saúde da família e enfermagem.">?</span></label>
                 <input type="range" id="c1" min="0" max="20" value="0" oninput="v1.innerText=this.value"> <span class="score-box" id="v1">0</span>
                 <label>2. Metodologia (10) <span class="help-icon" data-help="Adequação aos objetivos.">?</span></label>
                 <input type="range" id="c2" min="0" max="10" value="0" oninput="v2.innerText=this.value"> <span class="score-box" id="v2">0</span>
@@ -241,12 +231,24 @@
         document.body.appendChild(modal);
     }
 
+    async function salvarGSheets(id) {
+        const btn = document.getElementById("btnSend");
+        btn.innerText = "A ENVIAR..."; btn.disabled = true;
+        const total = Number(c1.value)+Number(c2.value)+Number(c3.value)+Number(c4.value)+Number(c5.value)+Number(c6.value)+Number(c7.value);
+        const dados = { id: id, avaliador: nomeAv.value, c1: c1.value, c2: c2.value, c3: c3.value, c4: c4.value, c5: c5.value, c6: c6.value, c7: c7.value, total: total };
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
+            localStorage.setItem(`n-${id}`, JSON.stringify(dados));
+            alert("Avaliação enviada!"); location.reload();
+        } catch (e) { alert("Erro de conexão."); btn.disabled = false; }
+    }
+
     function mostrarRanking() {
         let lista = [];
         Object.keys(localStorage).forEach(k => { if(k.startsWith('n-')) lista.push(JSON.parse(localStorage.getItem(k))); });
         lista.sort((a,b) => b.total - a.total);
         const top = lista.slice(0, 10);
-        area.innerHTML = `<div style="background:white; padding:20px; border-radius:12px;"><h3>Top 10 e-Posters</h3><canvas id="chartRanking"></canvas><button onclick="location.reload()" style="margin-top:20px; padding:10px; cursor:pointer;">Voltar</button></div>`;
+        area.innerHTML = `<div style="background:white; padding:20px; border-radius:12px;"><h3>Top 10 - Pontuação Máxima 100</h3><canvas id="chartRanking"></canvas><button onclick="location.reload()" style="margin-top:20px; padding:10px; cursor:pointer;">Voltar</button></div>`;
         new Chart(document.getElementById('chartRanking'), { type: 'bar', data: { labels: top.map(t => "ID "+t.id), datasets: [{ label: 'Pontos', data: top.map(t => t.total), backgroundColor: '#0054A6' }] }, options: { scales: { y: { min: 0, max: 100 } } } });
     }
 
