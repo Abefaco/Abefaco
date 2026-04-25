@@ -3,159 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema CBEFC 2026</title>
+    <title>Painel CBEFC 2026 - Gestão e Avaliação</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--fundo); padding-top: 80px; }
-        header { background: var(--branco); height: 70px; position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 10px; }
-        .pdf-wrapper { width: 100%; height: 80vh; background: #525659; border-radius: 8px; border: none; }
-        .btn-ui { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; }
+        :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --cinza: #6c757d; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--fundo); padding-top: 80px; }
         
-        /* Admin Styles */
-        .admin-controls { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .admin-controls input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex: 1; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { background: var(--azul); color: white; padding: 12px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        .btn-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; transition: 0.3s; }
-        .btn-check.checked { background: var(--verde); border-color: var(--verde); position: relative; }
-        .btn-check.checked::after { content: 'L'; color: white; transform: scaleX(-1) rotate(-35deg); position: absolute; left: 6px; top: 2px; }
+        header { 
+            background: var(--branco); padding: 0 25px; height: 70px; position: fixed; top: 0; width: 100%; 
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box;
+        }
+
+        .container { max-width: 1350px; margin: 0 auto; padding: 20px; }
+        
+        /* Filtros Administrativos */
+        .controles-gestao { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; font-size: 0.85rem; }
+
+        .resumo-cards { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .card-mini { background: white; padding: 12px; border-radius: 8px; flex: 1; min-width: 110px; text-align: center; border-top: 4px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .card-mini span { display: block; font-size: 1.2rem; font-weight: bold; color: var(--azul); }
+        .card-mini label { font-size: 0.6rem; color: #666; text-transform: uppercase; font-weight: bold; }
+
+        /* Tabela e Botões */
+        .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th { background: var(--azul); color: white; padding: 12px; text-align: left; font-size: 0.85rem; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+
+        .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; color: transparent; font-weight: bold; line-height: 22px; text-align: center; }
+        .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
+
+        /* Tooltip de Ajuda (?) */
+        .help-icon {
+            display: inline-block; width: 24px; height: 24px; background: var(--cinza); color: white;
+            border-radius: 50%; text-align: center; font-size: 16px; cursor: help; line-height: 24px;
+            font-weight: bold; position: relative; margin-left: 8px; vertical-align: middle;
+        }
+        .help-icon:hover::after {
+            content: attr(data-help); position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #212529; color: white; padding: 12px; border-radius: 6px; width: 260px; font-weight: normal; z-index: 9999; font-size: 12px; line-height: 1.4; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn-play { background: var(--verde); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-avaliar { background: var(--azul); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
+
+        /* Estilo do Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
+        .criterio-row { margin-bottom: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .criterio-row label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--azul); font-size: 1rem; }
+        .score-val { float: right; font-weight: bold; color: var(--verde); font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
 <header>
-    <img src="logo.png" alt="Logo" style="height: 40px;">
-    <div id="statusHeader" style="font-weight: bold; color: var(--azul);">A validar...</div>
+    <img src="logo.png" alt="ABEFACO" style="height: 45px;">
+    <div id="identificacao" style="font-weight: bold; color: var(--azul);">Iniciando sessão...</div>
     <div>
-        <button id="btnVoltar" style="display:none; background:#666;" class="btn-ui" onclick="voltarAdmin()">Painel</button>
-        <button style="background:var(--vermelho); margin-left:10px;" class="btn-ui" onclick="sair()">Sair</button>
+        <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="voltarParaAdmin()">Painel Principal</button>
+        <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
     </div>
 </header>
 
-<div class="container" id="mainContent">
-    <div style="text-align:center; margin-top: 100px;">
-        <h2>A carregar trabalho...</h2>
-        <p>Se demorar muito, verifique a sua ligação.</p>
-    </div>
+<div class="container">
+    <div id="displayArea">Carregando informações do banco de dados...</div>
 </div>
 
 <script>
-    const CONFIG = {
-        script: "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec",
-        database: "database.csv"
-    };
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
+    let bancoDeDadosCompleto = {};
+    let dadosPlanilhaGlobal = [];
+    
+    const sessao = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    if (!sessao) { window.location.href = "index.html"; }
 
-    let sessao = JSON.parse(localStorage.getItem('trabalhoAtivo'));
-    if (!sessao) window.location.href = "index.html";
-
-    const idAtivo = sessao.modoApresentacao ? sessao.idSelecionado : sessao.Número;
-    const isAdmin = sessao.Número === "ADMIN" && !sessao.modoApresentacao;
-
-    // 1. EXECUÇÃO IMEDIATA (Prioridade Máxima)
-    window.onload = () => {
-        if (!isAdmin) {
-            document.getElementById('statusHeader').innerText = "Trabalho ID: " + idAtivo;
-            if(sessao.modoApresentacao) document.getElementById('btnVoltar').style.display = "inline-block";
-            carregarVisualizador(idAtivo);
-        }
-        processarDados();
-    };
-
-    // 2. CARREGAR PDF (Sem depender de CSV ou Planilha)
-    function carregarVisualizador(id) {
-        const urlPDF = `posters/${id}.pdf`;
-        const container = document.getElementById('mainContent');
-
-        fetch(urlPDF, { method: 'HEAD' }).then(res => {
-            if (res.ok) {
-                container.innerHTML = `
-                    <iframe src="${urlPDF}?v=${Math.random()}" class="pdf-wrapper"></iframe>
-                `;
-            } else {
-                const forms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
-                container.innerHTML = `
-                    <div style="text-align:center; padding: 20px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px;">
-                        <h3>Arquivo não detetado na pasta /posters</h3>
-                        <p>ID: <b>${id}</b> | Por favor, submeta o PDF pelo formulário abaixo:</p>
-                        <iframe src="${forms}" width="100%" height="600px" style="border:none; background:white;"></iframe>
-                    </div>
-                `;
-            }
-        }).catch(() => {
-            container.innerHTML = `<iframe src="${urlPDF}" class="pdf-wrapper"></iframe>`;
-        });
-    }
-
-    // 3. PROCESSAR DADOS (Admin e Títulos)
-    async function processarDados() {
-        let notas = [];
+    async function inicializar() {
+        // 1. Sincroniza notas e presença global da Planilha Google
         try {
-            const resp = await fetch(CONFIG.script);
-            notas = await resp.json();
-        } catch(e) {}
+            const resp = await fetch(GOOGLE_SCRIPT_URL);
+            dadosPlanilhaGlobal = await resp.json();
+        } catch(e) { console.error("Erro na sincronização."); }
 
-        Papa.parse(CONFIG.database, {
+        // 2. Carrega o banco local (CSV) e define a visualização
+        Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
-            complete: (results) => {
+            complete: function(results) {
                 results.data.forEach(row => { 
                     const id = String(row.Número).trim();
                     if(id) bancoDeDadosCompleto[id] = row; 
                 });
 
-                if (isAdmin) {
-                    document.getElementById('statusHeader').innerText = "PAINEL ADMIN";
-                    renderizarAdmin(results.data, notas);
+                if (sessao.Número === "ADMIN" && !sessao.modoApresentacao) {
+                    document.getElementById('identificacao').innerText = "SESSÃO: ADMINISTRADOR (ABEFACO)";
+                    renderizarInterfaceAdmin(results.data);
+                } else {
+                    const idTrabalho = sessao.modoApresentacao ? sessao.idSelecionado : sessao.Número;
+                    document.getElementById('identificacao').innerText = `TRABALHO ID: ${idTrabalho}`;
+                    if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
+                    renderizarVisualizacaoSolo(idTrabalho);
                 }
             }
         });
     }
 
-    function renderizarAdmin(lista, notas) {
-        const container = document.getElementById('mainContent');
-        container.innerHTML = `
-            <div class="admin-controls">
-                <input type="text" id="busca" onkeyup="filtrar()" placeholder="Procurar ID ou Título...">
-                <select id="fMod" onchange="filtrar()"><option value="todos">Todas Modalidades</option><option value="Oral">Oral</option><option value="e-Poster">e-Poster</option></select>
-            </div>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead><tr><th>Pres.</th><th>ID</th><th>Título</th><th>Ações</th></tr></thead>
-                    <tbody id="tabelaCorpo"></tbody>
-                </table>
-            </div>
-        `;
-
-        const tbody = document.getElementById('tabelaCorpo');
-        lista.forEach(row => {
-            const id = String(row.Número).trim();
-            if(!id) return;
-            const nota = notas.find(n => n.id === id);
-            const presente = nota ? nota.presenca : false;
-
-            const tr = document.createElement('tr');
-            tr.setAttribute('data-mod', (row.modalidade || "").includes('Oral') ? 'Oral' : 'e-Poster');
-            tr.innerHTML = `
-                <td><div class="btn-check ${presente ? 'checked' : ''}" onclick="marcarPresenca('${id}')"></div></td>
-                <td><b>${id}</b></td>
-                <td>${row.Título || "Sem título"}</td>
-                <td>
-                    <button class="btn-ui" style="background:var(--verde)" onclick="play('${id}')">Play</button>
-                    ${presente ? `<button class="btn-ui" style="background:var(--azul); margin-left:5px;" onclick="avaliar('${id}')">Nota</button>` : ''}
-                </td>
-            `;
-            tbody.appendChild(tr);
+    // FUNÇÃO PARA VISUALIZAR PDF OU MOSTRAR FORMULÁRIO DE ENVIO
+    function renderizarVisualizacaoSolo(id) {
+        const area = document.getElementById('displayArea');
+        const trab = bancoDeDadosCompleto[id];
+        const titulo = trab ? trab.Título : "Trabalho ID: " + id;
+        
+        area.innerHTML = `<h2 style="color:var(--azul); margin-bottom:20px;">${titulo}</h2><div id="conteudoPDF">Verificando arquivo na pasta /posters...</div>`;
+        
+        const caminhoPDF = `posters/${id}.pdf`;
+        
+        fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
+            if (res.ok) {
+                document.getElementById('conteudoPDF').innerHTML = `
+                    <div style="width:100%; height:82vh; background:#525659; border-radius:8px; overflow:hidden;">
+                        <object data="${caminhoPDF}?v=${Math.random()}" type="application/pdf" width="100%" height="100%">
+                            <iframe src="${caminhoPDF}" width="100%" height="100%" style="border:none;"></iframe>
+                        </object>
+                    </div>`;
+            } else {
+                const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
+                document.getElementById('conteudoPDF').innerHTML = `
+                    <div style="text-align:center; padding: 30px; background: #fffbe6; border-radius:10px; border:1px solid #ffe58f;">
+                        <h3 style="color:#856404;">Atenção: Arquivo não localizado</h3>
+                        <p>O arquivo <b>${id}.pdf</b> não foi encontrado no servidor.</p>
+                        <p>Por favor, utilize o formulário abaixo para realizar a submissão:</p>
+                        <iframe src="${linkForms}" style="width: 100%; height: 550px; border: none; background: white; border-radius:8px;"></iframe>
+                    </div>`;
+            }
         });
     }
 
-    // FUNÇÕES DE BOTÃO
-    async function marcarPresenca(id) {
-        const payload = { tipo: "PRESENCA", id: id, status: true };
-        await fetch(CONFIG.script, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
-        location.reload();
+    // TELA DE GESTÃO DO ADMINISTRADOR
+    function renderizarInterfaceAdmin(lista) {
+        document.getElementById('displayArea').innerHTML = `
+            <div class="controles-gestao">
+                <input type="text" id="inputBusca" onkeyup="filtrar()" placeholder="Buscar ID ou Título...">
+                <select id="fMod" onchange="filtrar()"><option value="todos">Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
+                <select id="fSit" onchange="filtrar()"><option value="todos">Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
+                <button onclick="location.reload()" style="background:var(--azul); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Atualizar Dados</button>
+            </div>
+            <div class="resumo-cards">
+                <div class="card-mini" style="border-top-color: var(--azul)"><label>Trabalhos</label><span id="cTotal">0</span></div>
+                <div class="card-mini" style="border-top-color: orange"><label>Presentes (Nuvem)</label><span id="cPres">0</span></div>
+            </div>
+            <div class="table-container"><table>
+                <thead><tr><th>Presença</th><th>ID</th><th>Título</th><th>PDF</th><th>Ações</th></tr></thead>
+                <tbody id="corpoTabela"></tbody>
+            </table></div>`;
+
+        const tbody = document.getElementById('corpoTabela');
+        lista.forEach(row => {
+            const id = String(row.Número).trim();
+            if(!id) return;
+            const info = dadosPlanilhaGlobal.find(a => a.id === id);
+            const estaPresente = info ? info.presenca : false;
+
+            const tr = document.createElement('tr');
+            tr.id = `tr-${id}`;
+            tr.setAttribute('data-mod', (row.modalidade || "").toLowerCase().includes('oral') ? 'Oral' : 'e-Poster');
+            tr.setAttribute('data-sit', (row.Situação || "").trim());
+            tr.setAttribute('data-pres', estaPresente ? 'sim' : 'nao');
+
+            tr.innerHTML = `
+                <td style="text-align:center;"><button id="check-${id}" class="btn-check ${estaPresente ? 'checked' : ''}" onclick="togglePresencaGlobal('${id}')">✓</button></td>
+                <td><b>${id}</b></td>
+                <td><div style="font-weight:bold;">${row.Título}</div><small style="color:#666;">${row.Autores}</small></td>
+                <td id="st-${id}">...</td>
+                <td id="acoes-${id}"></td>`;
+            
+            tbody.appendChild(tr);
+            verificarStatusEBotao(id, tr, estaPresente);
+        });
+    }
+
+    async function togglePresencaGlobal(id) {
+        const btn = document.getElementById(`check-${id}`);
+        const novoStatus = !btn.classList.contains('checked');
+        btn.style.opacity = "0.5";
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tipo: "PRESENCA", id: id, status: novoStatus }) });
+            location.reload(); 
+        } catch(e) { alert("Erro de conexão."); btn.style.opacity = "1"; }
+    }
+
+    function verificarStatusEBotao(id, tr, presente) {
+        fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
+            const existe = res.ok;
+            tr.setAttribute('data-pdf', existe ? 'sim' : 'nao');
+            document.getElementById('st-'+id).innerHTML = existe ? '<b style="color:green">Sim</b>' : '<b style="color:red">Não</b>';
+            
+            let html = "";
+            if(existe) html += `<button onclick="play('${id}')" class="btn-play">Play</button>`;
+            else html += `<a href="https://github.com/Abefaco/Abefaco/upload/main/posters" target="_blank" style="font-size:10px; color:var(--azul); font-weight:bold;">SUBIR</a>`;
+            
+            if(presente) html += `<button onclick="avaliar('${id}')" class="btn-avaliar">Avaliar</button>`;
+            document.getElementById('acoes-'+id).innerHTML = html;
+            filtrar();
+        });
     }
 
     function play(id) {
@@ -163,21 +217,29 @@
         location.reload();
     }
 
-    function voltarAdmin() {
+    function voltarParaAdmin() {
         localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", modoApresentacao: false }));
         location.reload();
     }
 
     function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
 
+    // FILTRO DINÂMICO
     function filtrar() {
-        const val = document.getElementById('busca').value.toLowerCase();
-        const mod = document.getElementById('fMod').value;
-        document.querySelectorAll("tbody tr").forEach(tr => {
-            const match = tr.innerText.toLowerCase().includes(val) && (mod === "todos" || tr.getAttribute('data-mod') === mod);
-            tr.style.display = match ? "" : "none";
+        const t = document.getElementById('inputBusca')?.value.toLowerCase() || "";
+        const m = document.getElementById('fMod')?.value || "todos";
+        const s = document.getElementById('fSit')?.value || "todos";
+        let cT=0, cP=0;
+        document.querySelectorAll("#corpoTabela tr").forEach(l => {
+            let match = l.innerText.toLowerCase().includes(t) && (m==='todos'||l.getAttribute('data-mod')===m) && (s==='todos'||l.getAttribute('data-sit')===s);
+            l.style.display = match ? "" : "none";
+            if(match) { cT++; if(l.getAttribute('data-pres')==='sim') cP++; }
         });
+        if(document.getElementById('cTotal')) document.getElementById('cTotal').innerText = cT;
+        if(document.getElementById('cPres')) document.getElementById('cPres').innerText = cP;
     }
+
+    inicializar();
 </script>
 </body>
 </html>
