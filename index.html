@@ -3,210 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acesso e-Posters - ABEFACO</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <title>Login - CBEFC 2026</title>
     <style>
-        :root {
-            --azul: #0054A6;
-            --fundo: #f4f7f6;
-            --branco: #ffffff;
-            --cinza-claro: #e9ecef;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--fundo);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .login-card {
-            background: var(--branco);
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            border-top: 5px solid var(--azul);
-        }
-
-        .logo { height: 60px; margin-bottom: 20px; }
-        h2 { color: var(--azul); margin-bottom: 10px; font-size: 1.4rem; }
-        p { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
-
-        .input-group { text-align: left; margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #333; font-weight: 600; font-size: 0.85rem; }
-        
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #eee;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 1rem;
-            transition: 0.3s;
-        }
-        input:focus { border-color: var(--azul); outline: none; }
-
-        button {
-            width: 100%;
-            background-color: var(--azul);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-        button:hover { background-color: #003d7a; }
-
-        .divider {
-            margin: 30px 0;
-            border-top: 1px solid #ddd;
-            position: relative;
-        }
-        .divider span {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--branco);
-            padding: 0 15px;
-            color: #999;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-        }
-
-        .btn-secundario { background-color: #28a745; }
-        .btn-secundario:hover { background-color: #1e7e34; }
-
-        #mensagem {
-            margin-top: 15px;
-            font-size: 0.85rem;
-            min-height: 20px;
-        }
-
-        .footer-info {
-            margin-top: 25px;
-            font-size: 0.75rem;
-            color: #999;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; border-top: 5px solid #0054A6; }
+        img { max-width: 150px; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background: #0054A6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        button:hover { background: #003d7a; }
+        #campoSenha { display: none; } /* Escondido por padrão */
     </style>
 </head>
 <body>
 
 <div class="login-card">
-    <img src="logo.png" alt="ABEFACO" class="logo">
-    <h2>Portal de e-Posters</h2>
+    <img src="logo.png" alt="Logo">
+    <h3>Acesso ao Sistema</h3>
     
-    <p>Acesso para Autores (E-mail + ID)</p>
-    <div class="input-group">
-        <label for="email">E-mail Cadastrado</label>
-        <input type="email" id="email" placeholder="exemplo@email.com">
+    <input type="text" id="usuarioID" placeholder="ID do Trabalho ou E-mail" oninput="verificarAdmin(this.value)">
+    
+    <div id="campoSenha">
+        <input type="password" id="senhaAdmin" placeholder="Senha Administrativa">
     </div>
-    <div class="input-group">
-        <label for="codigo">Código do Trabalho (ID)</label>
-        <input type="password" id="codigo" placeholder="Digite o ID numérico">
-    </div>
-    <button id="btnAcessar">Acessar Painel</button>
 
-    <div class="divider"><span>OU</span></div>
-
-    <p>Visualização Rápida (Apenas ID)</p>
-    <div class="input-group">
-        <label for="codigoApresentacao">Código para Apresentação</label>
-        <input type="password" id="codigoApresentacao" placeholder="Digite o ID numérico">
-    </div>
-    <button id="btnApresentar" class="btn-secundario">Iniciar Apresentação</button>
-
-    <div id="mensagem"></div>
-
-    <div class="footer-info">
-        II Congresso Brasileiro de Enfermagem de Família e Comunidade
-    </div>
+    <button onclick="realizarLogin()">Entrar</button>
 </div>
 
 <script>
-    const msg = document.getElementById('mensagem');
+    function verificarAdmin(valor) {
+        const campoSenha = document.getElementById('campoSenha');
+        if (valor.trim().toLowerCase() === "abefaco@gmail.com") {
+            campoSenha.style.display = "block";
+        } else {
+            campoSenha.style.display = "none";
+        }
+    }
 
-    document.getElementById('btnAcessar').onclick = function() {
-        const emailUser = document.getElementById('email').value.trim().toLowerCase();
-        const codUser = document.getElementById('codigo').value.trim();
+    function realizarLogin() {
+        const id = document.getElementById('usuarioID').value.trim();
+        const senha = document.getElementById('senhaAdmin').value;
 
-        if (!emailUser || !codUser) {
-            msg.innerHTML = "<span style='color:orange;'>Preencha e-mail e código.</span>";
+        if (id === "") {
+            alert("Por favor, insira um ID válido.");
             return;
         }
 
-        if (emailUser === "abefaco@gmail.com" && codUser === "092026") {
-            localStorage.setItem('trabalhoAtivo', JSON.stringify({
-                Número: "ADMIN", Título: "PAINEL ADMINISTRATIVO", Autores: "Gestão ABEFACO"
-            }));
-            window.location.href = "dashboard.html";
-            return;
-        }
-
-        msg.innerHTML = "Validando...";
-        Papa.parse("database.csv", {
-            download: true, header: true, skipEmptyLines: true,
-            complete: function(results) {
-                const trabalho = results.data.find(t => String(t.Número).trim() === codUser);
-                if (trabalho) {
-                    const emailsNoCSV = trabalho.Emails ? trabalho.Emails.toLowerCase() : "";
-                    if (emailsNoCSV.includes(emailUser)) {
-                        localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
-                        window.location.href = "dashboard.html";
-                    } else {
-                        msg.innerHTML = "<span style='color:red;'>E-mail não autorizado.</span>";
-                    }
-                } else {
-                    msg.innerHTML = "<span style='color:red;'>Código não encontrado.</span>";
-                }
-            }
-        });
-    };
-
-    document.getElementById('btnApresentar').onclick = function() {
-        const codUser = document.getElementById('codigoApresentacao').value.trim();
-
-        if (!codUser) {
-            msg.innerHTML = "<span style='color:orange;'>Digite o código do trabalho.</span>";
-            return;
-        }
-
-        msg.innerHTML = "Localizando trabalho...";
-        Papa.parse("database.csv", {
-            download: true, header: true, skipEmptyLines: true,
-            complete: function(results) {
-                const trabalho = results.data.find(t => String(t.Número).trim() === codUser);
-                if (trabalho) {
-                    trabalho.modoApresentacao = true; 
-                    localStorage.setItem('trabalhoAtivo', JSON.stringify(trabalho));
-                    window.location.href = "dashboard.html";
-                } else {
-                    msg.innerHTML = "<span style='color:red;'>Código de apresentação não encontrado.</span>";
-                }
-            }
-        });
-    };
-
-    document.addEventListener('keypress', function(e) {
-        if(e.key === 'Enter') {
-            if(document.activeElement.id === 'codigoApresentacao') {
-                document.getElementById('btnApresentar').click();
+        // Lógica para Admin
+        if (id.toLowerCase() === "abefaco@gmail.com") {
+            if (senha === "092026") {
+                localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN" }));
+                window.location.href = "dashboard.html";
             } else {
-                document.getElementById('btnAcessar').click();
+                alert("Senha administrativa incorreta!");
             }
+            return;
         }
-    });
+
+        // Lógica para Autor (Qualquer outro ID)
+        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: id }));
+        window.location.href = "dashboard.html";
+    }
 </script>
 
 </body>
