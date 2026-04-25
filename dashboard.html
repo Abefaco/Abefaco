@@ -17,7 +17,7 @@
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box;
         }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .controles-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; }
+        .controles-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; }
         .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
         .resumo-cards { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .card-mini { background: white; padding: 12px; border-radius: 8px; flex: 1; min-width: 120px; border-top: 4px solid #ccc; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -41,8 +41,8 @@
     <img src="logo.png" alt="ABEFACO" style="height: 45px;">
     <div id="identificacao" style="font-weight: bold; color: var(--azul);"></div>
     <div>
-        <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="location.reload()">Voltar ao Painel</button>
-        <button onclick="localStorage.removeItem('trabalhoAtivo'); window.location.href='index.html'" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
+        <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="voltarParaAdmin()">Voltar ao Painel</button>
+        <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
     </div>
 </header>
 
@@ -53,101 +53,110 @@
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
-    let bancoDeDadosLocal = {}; 
+    let bancoDeDadosCompleto = {}; 
     const dadosAtivos = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+
     if (!dadosAtivos) { window.location.href = "index.html"; }
 
     const area = document.getElementById('displayArea');
     const txtTitulo = document.getElementById('txtTitulo');
     const identificacao = document.getElementById('identificacao');
 
-    // Lógica Inicial
-    if (dadosAtivos.Número === "ADMIN") {
-        identificacao.innerText = "SESSÃO: ADMINISTRADOR";
-        renderizarAdmin();
-    } else {
-        // Se for modo apresentador iniciado pelo Admin, mostra botão de voltar
-        if(dadosAtivos.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
-        identificacao.innerText = `TRABALHO ID: ${dadosAtivos.Número}`;
-        renderizarTrabalhoIndiv();
-    }
+    // 1. Carrega o CSV e mapeia TUDO para a memória
+    Papa.parse("database.csv", {
+        download: true, header: true, skipEmptyLines: true,
+        complete: function(results) {
+            results.data.forEach(row => {
+                const id = String(row.Número).trim();
+                if(id) bancoDeDadosCompleto[id] = row;
+            });
 
-    // VISUALIZAÇÃO DO TRABALHO (AUTOR OU APRESENTADOR) - SEM FILTROS
-    function renderizarTrabalhoIndiv() {
-        txtTitulo.innerText = dadosAtivos.Título;
-        const id = dadosAtivos.Número;
+            // 2. Decide a Visualização
+            if (dadosAtivos.Número === "ADMIN" && !dadosAtivos.modoApresentacao) {
+                identificacao.innerText = "SESSÃO: ADMINISTRADOR";
+                renderizarPainelAdmin(results.data);
+            } else {
+                identificacao.innerText = `ID: ${dadosAtivos.Número}`;
+                if(dadosAtivos.Número === "ADMIN") document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
+                renderizarTrabalhoSolo(dadosAtivos.Número);
+            }
+        }
+    });
+
+    // FUNÇÃO QUE ABRE O TRABALHO (Ignora filtros, abre PDF ou Form de erro)
+    function renderizarTrabalhoSolo(id) {
+        const trabalho = bancoDeDadosCompleto[id];
+        if(!trabalho) {
+            area.innerHTML = "<div style='padding:20px;'>Erro: ID não encontrado no banco de dados.</div>";
+            return;
+        }
+        txtTitulo.innerText = trabalho.Título;
         const caminhoPDF = `posters/${id}.pdf`;
 
         fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
             if (res.ok) {
+                // Abre o PDF se existir
                 area.innerHTML = `<iframe src="${caminhoPDF}#toolbar=0&navpanes=0" style="width:100%; height:75vh; border:none;"></iframe>`;
             } else {
+                // Abre o formulário se o PDF não existir (Trabalho pendente)
                 const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
                 area.innerHTML = `
                     <div style="text-align:center; padding: 40px; background: #fffbe6; height: 100%; box-sizing: border-box; overflow-y: auto;">
                         <h3 style="color: #856404; margin-top: 0;">Poster em Processamento</h3>
-                        <p style="color: #666; margin-bottom: 20px;">O arquivo PDF ainda não foi localizado. Caso deseje submeter agora, utilize o formulário abaixo:</p>
+                        <p style="color: #666; margin-bottom: 20px;">O arquivo PDF (ID ${id}) ainda não foi localizado no sistema.</p>
                         <iframe src="${linkForms}" style="width: 100%; max-width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 8px; background: white;"></iframe>
                     </div>`;
             }
         });
     }
 
-    // VISUALIZAÇÃO DO PAINEL (ADMIN) - COM FILTROS RESTRITIVOS
-    function renderizarAdmin() {
+    // PAINEL DO ADMIN (Aqui sim aplicamos os filtros para sua gestão)
+    function renderizarPainelAdmin(listaCompleta) {
         txtTitulo.innerText = "Gestão de e-Posters Aprovados";
-        Papa.parse("database.csv", {
-            download: true, header: true, skipEmptyLines: true,
-            complete: function(results) {
-                let html = `
-                    <div class="controles-gestao">
-                        <input type="text" id="inputBusca" onkeyup="aplicarFiltros()" placeholder="Buscar e-Poster...">
-                        <select id="filtroAval" onchange="aplicarFiltros()"><option value="todos">Todos</option><option value="sim">Avaliados</option><option value="nao">Não Avaliados</option></select>
-                        <button onclick="mostrarRanking()" style="background:var(--azul); color:white; border:none; border-radius:6px; cursor:pointer;">Ver Ranking</button>
-                    </div>
-                    <div class="resumo-cards">
-                        <div class="card-mini" style="border-top-color: var(--azul)"><label>e-Posters</label><span id="countTotal">0</span></div>
-                        <div class="card-mini" style="border-top-color: orange"><label>Avaliados</label><span id="countAval">0</span></div>
-                    </div>
-                    <div class="table-container"><table>
-                        <thead><tr><th style="width:50px;">Pres.</th><th>ID</th><th>Título</th><th>PDF</th><th>Ação</th></tr></thead>
-                        <tbody id="corpoTabela"></tbody>
-                    </table></div>`;
-                area.innerHTML = html;
-                
-                results.data.forEach(row => {
-                    const id = String(row.Número).trim();
-                    const mod = (row.modalidade || "").toLowerCase();
-                    const sit = (row.Situação || "").toLowerCase();
+        area.innerHTML = `
+            <div class="controles-gestao">
+                <input type="text" id="inputBusca" onkeyup="aplicarFiltros()" placeholder="Buscar e-Poster...">
+                <select id="filtroAval" onchange="aplicarFiltros()"><option value="todos">Todos</option><option value="sim">Avaliados</option><option value="nao">Não Avaliados</option></select>
+                <button onclick="mostrarRanking()" style="background:var(--azul); color:white; border:none; border-radius:6px; cursor:pointer; padding:10px;">Ver Ranking</button>
+            </div>
+            <div class="resumo-cards">
+                <div class="card-mini" style="border-top-color: var(--azul)"><label>e-Posters</label><span id="countTotal">0</span></div>
+                <div class="card-mini" style="border-top-color: orange"><label>Avaliados</label><span id="countAval">0</span></div>
+            </div>
+            <div class="table-container"><table>
+                <thead><tr><th style="width:50px;">Pres.</th><th>ID</th><th>Título</th><th>PDF</th><th>Ação</th></tr></thead>
+                <tbody id="corpoTabela"></tbody>
+            </table></div>`;
 
-                    // FILTRO ADMIN: Apenas e-Poster e Aprovado
-                    if (id && id !== "undefined" && mod.includes("poster") && sit.includes("aprovado")) {
-                        bancoDeDadosLocal[id] = row;
-                        const avaliado = localStorage.getItem(`n-${id}`) ? 'sim' : 'nao';
-                        const pres = localStorage.getItem(`pres-${id}`) === 'true';
+        listaCompleta.forEach(row => {
+            const id = String(row.Número).trim();
+            const mod = (row.modalidade || "").toLowerCase().trim();
+            const sit = (row.Situação || "").toLowerCase().trim();
 
-                        const tr = document.createElement('tr');
-                        tr.setAttribute('data-aval', avaliado);
-                        tr.setAttribute('data-pdf', 'pendente');
-                        tr.innerHTML = `
-                            <td style="text-align:center;"><button id="check-${id}" class="btn-check ${pres ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
-                            <td><b>${id}</b></td>
-                            <td><div style="font-weight:bold;">${row.Título}</div><small>${row.Autores}</small></td>
-                            <td id="st-${id}">...</td>
-                            <td>
-                                <button onclick="iniciarApresentacaoAdmin('${id}')" style="background:var(--verde); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">Play</button>
-                                <button onclick="abrirAvaliacao('${id}')" style="background:var(--azul); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; margin-left:5px;">Avaliar</button>
-                            </td>`;
-                        document.getElementById('corpoTabela').appendChild(tr);
-                        verificarArquivo(id, tr);
-                    }
-                });
-                aplicarFiltros(); 
+            // Filtro apenas visual para a tabela do Admin
+            if (id && mod.includes("poster") && sit === "aprovado") {
+                const avaliado = localStorage.getItem(`n-${id}`) ? 'sim' : 'nao';
+                const pres = localStorage.getItem(`pres-${id}`) === 'true';
+
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-aval', avaliado);
+                tr.setAttribute('data-pdf', 'pendente');
+                tr.innerHTML = `
+                    <td style="text-align:center;"><button id="check-${id}" class="btn-check ${pres ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
+                    <td><b>${id}</b></td>
+                    <td><div style="font-weight:bold;">${row.Título}</div><small>${row.Autores}</small></td>
+                    <td id="st-${id}">...</td>
+                    <td>
+                        <button onclick="iniciarApresentacaoAdmin('${id}')" style="background:var(--verde); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">Play</button>
+                        <button onclick="abrirAvaliacao('${id}')" style="background:var(--azul); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; margin-left:5px;">Avaliar</button>
+                    </td>`;
+                document.getElementById('corpoTabela').appendChild(tr);
+                verificarArquivo(id, tr);
             }
         });
     }
 
-    // Funções Auxiliares (Mesma lógica das anteriores)
+    // --- FUNÇÕES DE SUPORTE ---
     function aplicarFiltros() {
         const termo = document.getElementById("inputBusca")?.value.toLowerCase() || "";
         const aval = document.getElementById("filtroAval")?.value || "todos";
@@ -164,12 +173,12 @@
 
     function verificarArquivo(id, tr) {
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
-            const campo = document.getElementById('st-'+id);
+            const st = document.getElementById('st-'+id);
             if(res.ok) { 
                 tr.setAttribute('data-pdf', 'enviado'); 
-                if(campo) campo.innerHTML = '<b style="color:green">Sim</b>'; 
+                if(st) st.innerHTML = '<b style="color:green">Sim</b>'; 
             } else { 
-                if(campo) campo.innerHTML = '<b style="color:red">Não</b>'; 
+                if(st) st.innerHTML = '<b style="color:red">Não</b>'; 
             }
             aplicarFiltros();
         });
@@ -180,15 +189,39 @@
         localStorage.setItem(`pres-${id}`, btn.classList.toggle('checked'));
     }
 
+    function iniciarApresentacaoAdmin(id) {
+        const adminMode = { Número: id, modoApresentacao: true };
+        localStorage.setItem('trabalhoAtivo', JSON.stringify(adminMode));
+        location.reload();
+    }
+
+    function voltarParaAdmin() {
+        const resetAdmin = { Número: "ADMIN", modoApresentacao: false };
+        localStorage.setItem('trabalhoAtivo', JSON.stringify(resetAdmin));
+        location.reload();
+    }
+
+    async function salvarGSheets(id) {
+        const btn = document.getElementById("btnSend");
+        btn.innerText = "ENVIANDO..."; btn.disabled = true;
+        const total = Number(c1.value)+Number(c2.value)+Number(c3.value)+Number(c4.value)+Number(c5.value)+Number(c6.value)+Number(c7.value);
+        const dados = { id: id, avaliador: nomeAv.value, c1: c1.value, c2: c2.value, c3: c3.value, c4: c4.value, c5: c5.value, c6: c6.value, c7: c7.value, total: total };
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
+            localStorage.setItem(`n-${id}`, JSON.stringify(dados));
+            alert("Sucesso!"); location.reload();
+        } catch (e) { alert("Erro!"); btn.disabled = false; }
+    }
+
     function abrirAvaliacao(id) {
-        const trab = bancoDeDadosLocal[id];
+        const trab = bancoDeDadosCompleto[id];
         const modal = document.createElement('div');
         modal.className = 'modal'; modal.id = 'modalAval';
         modal.innerHTML = `
             <div class="modal-content">
                 <h3>Avaliar ID: ${id}</h3>
                 <label>Avaliador:</label><input type="text" id="nomeAv" style="width:100%; padding:8px; margin-bottom:10px;" placeholder="Seu nome">
-                <label>1. Relevância (20) <span class="help-icon" data-help="Contribuição para saúde da família e enfermagem.">?</span></label>
+                <label>1. Relevância (20) <span class="help-icon" data-help="Relevância para saúde da família e enfermagem.">?</span></label>
                 <input type="range" id="c1" min="0" max="20" value="0" oninput="v1.innerText=this.value"> <span class="score-box" id="v1">0</span>
                 <label>2. Metodologia (10) <span class="help-icon" data-help="Adequação aos objetivos.">?</span></label>
                 <input type="range" id="c2" min="0" max="10" value="0" oninput="v2.innerText=this.value"> <span class="score-box" id="v2">0</span>
@@ -208,18 +241,6 @@
         document.body.appendChild(modal);
     }
 
-    async function salvarGSheets(id) {
-        const btn = document.getElementById("btnSend");
-        btn.innerText = "ENVIANDO..."; btn.disabled = true;
-        const total = Number(c1.value)+Number(c2.value)+Number(c3.value)+Number(c4.value)+Number(c5.value)+Number(c6.value)+Number(c7.value);
-        const dados = { id: id, avaliador: nomeAv.value, c1: c1.value, c2: c2.value, c3: c3.value, c4: c4.value, c5: c5.value, c6: c6.value, c7: c7.value, total: total };
-        try {
-            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
-            localStorage.setItem(`n-${id}`, JSON.stringify(dados));
-            alert("Sucesso!"); location.reload();
-        } catch (e) { alert("Erro!"); btn.disabled = false; }
-    }
-
     function mostrarRanking() {
         let lista = [];
         Object.keys(localStorage).forEach(k => { if(k.startsWith('n-')) lista.push(JSON.parse(localStorage.getItem(k))); });
@@ -229,14 +250,7 @@
         new Chart(document.getElementById('chartRanking'), { type: 'bar', data: { labels: top.map(t => "ID "+t.id), datasets: [{ label: 'Pontos', data: top.map(t => t.total), backgroundColor: '#0054A6' }] }, options: { scales: { y: { min: 0, max: 100 } } } });
     }
 
-    function iniciarApresentacaoAdmin(id) {
-        const trabalho = bancoDeDadosLocal[id];
-        if (trabalho) {
-            const clone = { ...trabalho, modoApresentacao: true };
-            localStorage.setItem('trabalhoAtivo', JSON.stringify(clone));
-            location.reload();
-        }
-    }
+    function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
 </script>
 </body>
 </html>
