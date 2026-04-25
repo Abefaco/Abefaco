@@ -3,54 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel CBEFC 2026</title>
+    <title>Painel CBEFC 2026 - Sistema Unificado</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --cinza: #6c757d; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--fundo); padding-top: 80px; }
-        header { background: var(--branco); height: 70px; position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box; }
+        
+        header { 
+            background: var(--branco); padding: 0 25px; height: 70px; position: fixed; top: 0; width: 100%; 
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box;
+        }
+
         .container { max-width: 1350px; margin: 0 auto; padding: 20px; }
-        .controles-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        /* Controles Admin */
+        .controles-gestao { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
         .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
-        .table-container { overflow-x: auto; background: white; border-radius: 8px; }
+
+        /* Tabela */
+        .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: var(--azul); color: white; padding: 12px; text-align: left; }
+        th { background: var(--azul); color: white; padding: 12px; text-align: left; font-size: 0.85rem; }
         td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+
+        /* Checklist Presença (Local) */
         .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; color: transparent; font-weight: bold; line-height: 22px; text-align: center; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
-        .help-icon { display: inline-block; width: 24px; height: 24px; background: var(--cinza); color: white; border-radius: 50%; text-align: center; font-size: 16px; cursor: help; line-height: 24px; font-weight: bold; position: relative; margin-left: 8px; vertical-align: middle; }
-        .help-icon:hover::after { content: attr(data-help); position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: #212529; color: white; padding: 12px; border-radius: 6px; width: 260px; font-weight: normal; z-index: 9999; font-size: 12px; line-height: 1.4; }
+
+        /* Modal de Avaliação */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
+        .criterio-row { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .criterio-row label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--azul); }
         .score-val { float: right; font-weight: bold; color: var(--verde); font-size: 1.2rem; }
-        .btn-play { background: var(--verde); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; }
-        .btn-avaliar { background: var(--azul); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
+        
+        .btn-play { background: var(--verde); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-avaliar { background: var(--azul); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
     </style>
 </head>
 <body>
 
 <header>
     <img src="logo.png" alt="ABEFACO" style="height: 45px;">
-    <div id="identificacao" style="font-weight: bold; color: var(--azul);">Identificando...</div>
+    <div id="identificacao" style="font-weight: bold; color: var(--azul);">Identificando sessão...</div>
     <div>
         <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="voltarParaAdmin()">Painel Principal</button>
         <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
     </div>
 </header>
 
-<div class="container">
-    <div id="displayArea">Carregando banco de dados...</div>
+<div class="container" id="main">
+    <div style="text-align:center; padding-top:100px;">Aguarde, carregando informações...</div>
 </div>
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
     let bancoDeDadosCompleto = {};
-    
     const sessao = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+
     if (!sessao) { window.location.href = "index.html"; }
 
-    function inicializar() {
+    // Inicialização
+    window.onload = () => {
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
@@ -58,70 +75,74 @@
                     const id = String(row.Número).trim();
                     if(id) bancoDeDadosCompleto[id] = row; 
                 });
-
-                if (sessao.Número === "ADMIN" && !sessao.modoApresentacao) {
-                    document.getElementById('identificacao').innerText = "SESSÃO: ADMINISTRADOR";
-                    renderizarInterfaceAdmin(results.data);
-                } else {
-                    const idTrabalho = sessao.modoApresentacao ? sessao.idSelecionado : sessao.Número;
-                    document.getElementById('identificacao').innerText = `ID: ${idTrabalho}`;
-                    if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
-                    renderizarVisualizacaoSolo(idTrabalho);
-                }
+                definirFluxo();
             }
         });
+    };
+
+    function definirFluxo() {
+        const area = document.getElementById('main');
+        const ident = document.getElementById('identificacao');
+
+        if (sessao.Número === "ADMIN" && !sessao.modoApresentacao) {
+            ident.innerText = "SESSÃO: ADMINISTRADOR";
+            renderizarAdmin();
+        } else {
+            const idAlvo = sessao.modoApresentacao ? sessao.idSelecionado : sessao.Número;
+            ident.innerText = "TRABALHO ID: " + idAlvo;
+            if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
+            renderizarTrabalhoSolo(idAlvo);
+        }
     }
 
-    function renderizarVisualizacaoSolo(id) {
-        const area = document.getElementById('displayArea');
+    function renderizarTrabalhoSolo(id) {
+        const area = document.getElementById('main');
         const trab = bancoDeDadosCompleto[id];
         const titulo = trab ? trab.Título : "Trabalho ID: " + id;
         const caminhoPDF = `posters/${id}.pdf`;
 
-        area.innerHTML = `<h3>${titulo}</h3><div id="conteudoPDF">Verificando arquivo...</div>`;
+        area.innerHTML = `<h2 style="color:var(--azul); margin-bottom:15px;">${titulo}</h2><div id="pdfContent">Verificando...</div>`;
         
         fetch(caminhoPDF, { method: 'HEAD' }).then(res => {
             if (res.ok) {
-                document.getElementById('conteudoPDF').innerHTML = `
+                document.getElementById('pdfContent').innerHTML = `
                     <iframe src="${caminhoPDF}" width="100%" height="750px" style="border:none; background:#525659; border-radius:8px;"></iframe>`;
             } else {
-                const linkForms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
-                document.getElementById('conteudoPDF').innerHTML = `
+                const forms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
+                document.getElementById('pdfContent').innerHTML = `
                     <div style="text-align:center; padding:30px; background:#fffbe6; border-radius:10px;">
-                        <h3>PDF não encontrado</h3>
-                        <iframe src="${linkForms}" style="width:100%; height:500px; border:none; background:white;"></iframe>
+                        <h3>PDF não localizado</h3>
+                        <p>O arquivo para o ID <b>${id}</b> não está na pasta /posters.</p>
+                        <iframe src="${forms}" style="width:100%; height:500px; border:none; background:white;"></iframe>
                     </div>`;
             }
         });
     }
 
-    function renderizarInterfaceAdmin(lista) {
-        document.getElementById('displayArea').innerHTML = `
+    function renderizarAdmin() {
+        const area = document.getElementById('main');
+        area.innerHTML = `
             <div class="controles-gestao">
-                <input type="text" id="inputBusca" onkeyup="filtrar()" placeholder="Buscar ID ou Título...">
-                <select id="fMod" onchange="filtrar()"><option value="todos">Modalidades</option><option value="Oral">Oral</option><option value="e-Poster">e-Poster</option></select>
+                <input type="text" id="busca" onkeyup="filtrar()" placeholder="Procurar ID ou Título...">
             </div>
             <div class="table-container"><table>
                 <thead><tr><th>Presença</th><th>ID</th><th>Título</th><th>PDF</th><th>Ações</th></tr></thead>
-                <tbody id="corpoTabela"></tbody>
+                <tbody id="tabelaAdmin"></tbody>
             </table></div>`;
 
-        lista.forEach(row => {
-            const id = String(row.Número).trim();
-            if(!id) return;
+        Object.keys(bancoDeDadosCompleto).forEach(id => {
+            const row = bancoDeDadosCompleto[id];
             const presLocal = localStorage.getItem(`pres-${id}`) === 'true';
 
             const tr = document.createElement('tr');
-            tr.id = `tr-${id}`;
-            tr.setAttribute('data-mod', (row.modalidade || "").includes('Oral') ? 'Oral' : 'e-Poster');
             tr.innerHTML = `
                 <td style="text-align:center;"><button id="check-${id}" class="btn-check ${presLocal ? 'checked' : ''}" onclick="togglePresLocal('${id}')">✓</button></td>
                 <td><b>${id}</b></td>
                 <td>${row.Título}</td>
                 <td id="st-${id}">...</td>
                 <td id="acoes-${id}"></td>`;
-            document.getElementById('corpoTabela').appendChild(tr);
-            verificarStatusAdmin(id, presLocal);
+            document.getElementById('tabelaAdmin').appendChild(tr);
+            verificarStatusEBotao(id, presLocal);
         });
     }
 
@@ -130,10 +151,10 @@
         const novoStatus = !btn.classList.contains('checked');
         btn.classList.toggle('checked', novoStatus);
         localStorage.setItem(`pres-${id}`, novoStatus);
-        verificarStatusAdmin(id, novoStatus);
+        verificarStatusEBotao(id, novoStatus);
     }
 
-    function verificarStatusAdmin(id, pres) {
+    function verificarStatusEBotao(id, pres) {
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
             const existe = res.ok;
             document.getElementById('st-'+id).innerHTML = existe ? '<b style="color:green">Sim</b>' : '<b style="color:red">Não</b>';
@@ -158,36 +179,28 @@
                 <div class="criterio-row"><label>Aplicabilidade (20)</label><input type="range" id="c5" min="0" max="20" value="0" oninput="v5.innerText=this.value"><span class="score-val" id="v5">0</span></div>
                 <div class="criterio-row"><label>Originalidade (20)</label><input type="range" id="c6" min="0" max="20" value="0" oninput="v6.innerText=this.value"><span class="score-val" id="v6">0</span></div>
                 <div class="criterio-row"><label>Presença (10)</label><input type="range" id="c7" min="0" max="10" value="0" oninput="v7.innerText=this.value"><span class="score-val" id="v7">0</span></div>
-                <button onclick="salvarNotaGlobal('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px">SALVAR NA PLANILHA GLOBAL</button>
+                <button onclick="salvarNota('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px">SALVAR NA PLANILHA GLOBAL</button>
                 <button onclick="mNota.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Cancelar</button>
             </div>`;
         document.body.appendChild(modal);
     }
 
-    async function salvarNotaGlobal(id) {
+    async function salvarNota(id) {
         const total = Number(c1.value)+Number(c2.value)+Number(c3.value)+Number(c4.value)+Number(c5.value)+Number(c6.value)+Number(c7.value);
-        // Enviamos o dado de presença (true) somente aqui, junto com a avaliação
+        // Aqui o registro de presença é enviado como TRUE para o Google
         const dados = { id, avaliador: avNome.value, c1:c1.value, c2:c2.value, c3:c3.value, c4:c4.value, c5:c5.value, c6:c6.value, c7:c7.value, total, presenca: true };
         await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
-        alert("Avaliação e Presença enviadas com sucesso!");
+        alert("Avaliação e Presença salvas!");
         location.reload();
     }
 
-    function play(id) {
-        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", idSelecionado: id, modoApresentacao: true }));
-        location.reload();
-    }
+    function play(id) { localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", idSelecionado: id, modoApresentacao: true })); location.reload(); }
     function voltarParaAdmin() { localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", modoApresentacao: false })); location.reload(); }
     function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
     function filtrar() {
-        const t = document.getElementById('inputBusca')?.value.toLowerCase() || "";
-        const m = document.getElementById('fMod')?.value || "todos";
-        document.querySelectorAll("tbody tr").forEach(l => {
-            let match = l.innerText.toLowerCase().includes(t) && (m==='todos'||l.getAttribute('data-mod')===m);
-            l.style.display = match ? "" : "none";
-        });
+        const v = document.getElementById('busca').value.toLowerCase();
+        document.querySelectorAll("tbody tr").forEach(tr => { tr.style.display = tr.innerText.toLowerCase().includes(v) ? "" : "none"; });
     }
-    inicializar();
 </script>
 </body>
 </html>
