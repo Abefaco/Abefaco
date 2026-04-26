@@ -9,17 +9,18 @@
         :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --cinza: #6c757d; }
         body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; }
 
+        /* Fundo Maceió Unificado */
         .bg-dashboard {
             background-image: url('fundo-maceio.png');
             background-size: cover; background-position: center; background-attachment: fixed;
             min-height: 100vh; width: 100%; position: relative;
         }
 
-        /* Efeito de Blur no Fundo */
+        /* Overlay Azul com Blur (Igual à tela inicial) */
         .bg-overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0, 0, 0, 0.2); 
-            backdrop-filter: blur(8px);
+            background: rgba(0, 84, 166, 0.4); /* Mesmo azul 40% da página de login */
+            backdrop-filter: blur(8px); /* Efeito de desfoque */
             z-index: 1; 
         }
 
@@ -35,6 +36,7 @@
 
         .container { position: relative; z-index: 10; max-width: 1350px; margin: 0 auto; padding: 90px 20px 40px 20px; }
         
+        /* Caixa Branca de Conteúdo */
         .admin-content-box {
             background: rgba(255, 255, 255, 0.94); padding: 25px; border-radius: 15px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.3);
@@ -91,8 +93,6 @@
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
-    
-    // LINK QUE VOCÊ ENVIOU
     const FORM_SUBMISSAO_URL = "https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform";
 
     let bancoDeDadosCompleto = [];
@@ -106,7 +106,7 @@
         try {
             const resp = await fetch(GOOGLE_SCRIPT_URL);
             avaliacoesGlobais = await resp.json();
-        } catch(e) { console.warn("Erro ao ler Planilha."); }
+        } catch(e) { console.warn("Planilha Offline."); }
 
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
@@ -155,7 +155,7 @@
                 document.getElementById('pdfSpace').innerHTML = `
                     <div style="text-align:center; padding:30px; background:#fffbe6; border-radius:10px; border:1px solid #ffe58f;">
                         <h3 style="color:#856404;">e-Pôster não localizado</h3>
-                        <p>O arquivo para o ID <b>${id}</b> não foi encontrado. Submeta-o abaixo:</p>
+                        <p>O arquivo para o ID <b>${id}</b> não foi encontrado.</p>
                         <iframe src="${formsPreenchido}" style="width:100%; height:600px; background:white; border:none;"></iframe>
                     </div>`;
             }
@@ -175,7 +175,7 @@
                     <div class="stat-item"><span id="stat-pdf">0</span><label>PDFs OK</label></div>
                 </div>
                 <div class="controles-gestao">
-                    <input type="text" id="busca" onkeyup="filtrar()" placeholder="Pesquisar...">
+                    <input type="text" id="busca" onkeyup="filtrar()" placeholder="Pesquisar ID, Título ou Autor...">
                     <select id="fMod" onchange="filtrar()"><option value="todos">Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
                     <select id="fSit" onchange="filtrar()"><option value="todos">Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
                     <select id="fPDF" onchange="filtrar()"><option value="todos">Status PDF</option><option value="sim">Enviado</option><option value="nao">Pendente</option></select>
@@ -285,8 +285,8 @@
     }
 
     function togglePresenca(id) {
-        const statusAtual = localStorage.getItem(`pres-${id}`) === 'true';
-        localStorage.setItem(`pres-${id}`, !statusAtual);
+        const atual = localStorage.getItem(`pres-${id}`) === 'true';
+        localStorage.setItem(`pres-${id}`, !atual);
         location.reload(); 
     }
 
