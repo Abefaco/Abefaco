@@ -30,7 +30,6 @@
         #sync-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--cinza); font-weight: bold; }
         .dot { width: 10px; height: 10px; background: #ccc; border-radius: 50%; }
         .dot.active { background: #007bff; box-shadow: 0 0 8px #007bff; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
         .container { position: relative; z-index: 10; max-width: 1350px; margin: 0 auto; padding: 90px 20px 40px 20px; }
         
@@ -57,32 +56,21 @@
         th { background: #f1f3f5; color: #444; padding: 12px; text-align: left; font-size: 0.85rem; border-bottom: 2px solid #dee2e6; }
         td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
 
-        .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: transparent; font-weight: bold; text-align: center; line-height: 24px; }
+        .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: transparent; font-weight: bold; text-align: center; line-height: 24px; transition: 0.3s; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
         
         .btn-play { background: var(--verde); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-avaliar { background: var(--azul); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
 
-        /* Ponto de Interrogação */
-        .help-icon {
-            display: inline-block; width: 20px; height: 20px; background: var(--cinza); color: white;
-            border-radius: 50%; text-align: center; font-size: 14px; cursor: help; line-height: 20px;
-            font-weight: bold; position: relative; margin-left: 8px; vertical-align: middle;
-        }
-        .help-icon:hover::after {
-            content: attr(data-help); position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
-            background: #212529; color: white; padding: 10px; border-radius: 6px; width: 220px; font-weight: normal; z-index: 9999; font-size: 11px; line-height: 1.3; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+        .help-icon { display: inline-block; width: 20px; height: 20px; background: var(--cinza); color: white; border-radius: 50%; text-align: center; font-size: 14px; cursor: help; line-height: 20px; font-weight: bold; position: relative; margin-left: 8px; vertical-align: middle; }
+        .help-icon:hover::after { content: attr(data-help); position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); background: #212529; color: white; padding: 10px; border-radius: 6px; width: 220px; font-weight: normal; z-index: 9999; font-size: 11px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
 
-        /* Modal Fixo e Superior */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 15px; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; position: relative; }
         .criterio-row { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .criterio-row label { display: inline-block; font-weight: bold; font-size: 0.9rem; color: var(--azul); }
         .score-val { float: right; font-weight: bold; color: var(--verde); font-size: 1.2rem; }
         
         textarea { width: 100%; height: 70px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; padding: 10px; box-sizing: border-box; resize: none; font-family: inherit; }
-        
         iframe, embed { width: 100%; height: 82vh; border: none; border-radius: 8px; background: #525659; }
     </style>
 </head>
@@ -90,7 +78,6 @@
 
 <div class="bg-dashboard">
     <div class="bg-overlay"></div>
-
     <header>
         <img src="logo.png" alt="Logo" style="height: 40px;">
         <div id="sync-indicator"><div class="dot" id="sync-dot"></div> <span id="sync-text">Sincronizado</span></div>
@@ -99,7 +86,6 @@
             <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
         </div>
     </header>
-
     <div class="container" id="areaConteudo"></div>
 </div>
 
@@ -114,11 +100,11 @@
     if (!sessao) window.location.href = "index.html";
 
     window.onload = async () => {
-        setSync(true, "Sincronizando Dados...");
+        setSync(true, "Carregando Planilha...");
         try {
             const resp = await fetch(GOOGLE_SCRIPT_URL);
             avaliacoesGlobais = await resp.json();
-        } catch(e) { console.warn("Planilha Offline."); }
+        } catch(e) { console.warn("Erro ao buscar dados da planilha."); }
 
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
@@ -151,11 +137,10 @@
         const titulo = trab ? trab.Título : "Trabalho ID " + id;
         const caminhoPDF = `posters/${id}.pdf#toolbar=0&navpanes=0&scrollbar=0`;
 
-        area.innerHTML = `
-            <div class="admin-content-box">
-                <h2 style="color:var(--azul); margin-bottom:20px;">${titulo}</h2>
-                <div id="pdfSpace">Verificando arquivo no servidor...</div>
-            </div>`;
+        area.innerHTML = `<div class="admin-content-box">
+            <h2 style="color:var(--azul); margin-bottom:20px;">${titulo}</h2>
+            <div id="pdfSpace">Verificando arquivo...</div>
+        </div>`;
         
         if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
 
@@ -163,12 +148,10 @@
             if (res.ok) {
                 document.getElementById('pdfSpace').innerHTML = `<embed src="${caminhoPDF}" type="application/pdf">`;
             } else {
-                const urlFinal = `${LINK_SUBMISSAO}?entry.1292953747=${id}`;
                 document.getElementById('pdfSpace').innerHTML = `
                     <div style="text-align:center; padding:30px; background:#fffbe6; border-radius:12px; border:1px solid #ffe58f;">
                         <h3 style="color:#856404;">e-Pôster não localizado</h3>
-                        <p>O arquivo para o ID <b>${id}</b> não foi encontrado no sistema.</p>
-                        <a href="${urlFinal}" target="_blank" style="display:inline-block; background:var(--azul); color:white; padding:15px 30px; text-decoration:none; border-radius:8px; font-weight:bold; margin-top:20px;">CLIQUE AQUI PARA SUBMETER</a>
+                        <a href="${LINK_SUBMISSAO}?entry.1292953747=${id}" target="_blank" style="display:inline-block; background:var(--azul); color:white; padding:15px 30px; text-decoration:none; border-radius:8px; font-weight:bold; margin-top:20px;">SUBMETER AGORA</a>
                     </div>`;
             }
         });
@@ -185,9 +168,9 @@
                     <div class="stat-item"><span id="stat-pdf">0</span><label>PDFs OK</label></div>
                 </div>
                 <div class="controles-gestao">
-                    <input type="text" id="busca" onkeyup="filtrar()" placeholder="Pesquisar ID, Título ou Autor...">
+                    <input type="text" id="busca" onkeyup="filtrar()" placeholder="Pesquisar...">
                     <select id="fMod" onchange="filtrar()"><option value="todos">Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
-                    <select id="fSit" onchange="filtrar()"><option value="todos">Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
+                    <select id="fSit" onchange="filtrar()"><option value="todos">Situações</option><option value="Aprovado">Aprovado</option></select>
                     <select id="fPDF" onchange="filtrar()"><option value="todos">Status PDF</option><option value="sim">Enviado</option><option value="nao">Pendente</option></select>
                     <select id="fAval" onchange="filtrar()"><option value="todos">Avaliação</option><option value="sim">Avaliado</option><option value="nao">Pendente</option></select>
                 </div>
@@ -200,7 +183,9 @@
         bancoDeDadosCompleto.forEach(row => {
             const id = row.Número ? String(row.Número).trim() : null;
             if(!id) return;
-            const presLocal = localStorage.getItem(`pres-${id}`) === 'true';
+            
+            // VERIFICA SE O ID TEM PRESENÇA NA PLANILHA ONLINE
+            const temPresencaPlanilha = avaliacoesGlobais.some(a => String(a.id).trim() === id && (a.presenca === true || a.presenca === "TRUE"));
             const jaAvaliado = avaliacoesGlobais.some(a => String(a.id).trim() === id);
             
             const tr = document.createElement('tr');
@@ -209,14 +194,14 @@
             tr.setAttribute('data-aval', jaAvaliado ? 'sim' : 'nao');
 
             tr.innerHTML = `
-                <td align="center"><button id="check-${id}" class="btn-check ${presLocal ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
+                <td align="center"><button id="check-${id}" class="btn-check ${temPresencaPlanilha ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
                 <td><b>${id}</b></td>
                 <td><div style="font-weight:bold">${row.Título}</div><small>${row.Autores}</small></td>
                 <td id="st-${id}">...</td>
                 <td>${jaAvaliado ? '<b style="color:green">Avaliado</b>' : '<span style="color:#999">Pendente</span>'}</td>
                 <td id="acoes-${id}"></td>`;
             document.getElementById('tabelaAdmin').appendChild(tr);
-            verificarPDFLista(id, presLocal, tr);
+            verificarPDFLista(id, temPresencaPlanilha, tr);
         });
     }
 
@@ -233,10 +218,33 @@
         });
     }
 
-    function abrirModalAvaliacao(id) {
-        const oldModal = document.getElementById('mNota');
-        if(oldModal) oldModal.remove();
+    async function togglePresenca(id) {
+        const btn = document.getElementById(`check-${id}`);
+        const estaMarcado = btn.classList.contains('checked');
+        
+        if(!confirm(estaMarcado ? "Deseja remover a presença?" : "Deseja confirmar a presença deste trabalho?")) return;
 
+        setSync(true, "Atualizando Planilha...");
+        
+        const dados = {
+            id: id,
+            presenca: !estaMarcado, // Envia o inverso do estado atual
+            avaliador: "Sistema de Presença",
+            total: 0, 
+            acao: "presenca_solo" // Flag opcional para seu script saber que é só presença
+        };
+
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
+            alert("Presença atualizada na planilha!");
+            location.reload(); // Recarrega para refletir o novo estado vindo da planilha
+        } catch (e) {
+            alert("Erro ao sincronizar. Tente novamente.");
+            setSync(false, "Erro de Conexão");
+        }
+    }
+
+    function abrirModalAvaliacao(id) {
         const modal = document.createElement('div');
         modal.className = 'modal'; modal.id = 'mNota';
         modal.innerHTML = `
@@ -244,42 +252,14 @@
                 <h3 style="margin-top:0; color:var(--azul);">Avaliar ID: ${id}</h3>
                 <label>Nome do Avaliador:</label>
                 <input type="text" id="avNome" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:8px">
-                
-                <div class="criterio-row">
-                    <label>1. Relevância (20) <span class="help-icon" data-help="Importância do tema para a Enfermagem e Saúde da Família.">?</span></label>
-                    <input type="range" id="c1" min="0" max="20" value="0" oninput="document.getElementById('v1').innerText=this.value">
-                    <span class="score-val" id="v1">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>2. Metodologia (10) <span class="help-icon" data-help="Adequação aos objetivos e validade dos resultados.">?</span></label>
-                    <input type="range" id="c2" min="0" max="10" value="0" oninput="document.getElementById('v2').innerText=this.value">
-                    <span class="score-val" id="v2">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>3. Visual (10) <span class="help-icon" data-help="Trabalho adequado ao modelo e conteúdo claro.">?</span></label>
-                    <input type="range" id="c3" min="0" max="10" value="0" oninput="document.getElementById('v3').innerText=this.value">
-                    <span class="score-val" id="v3">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>4. Oral (10) <span class="help-icon" data-help="Linguagem clara, objetiva e domínio do tema.">?</span></label>
-                    <input type="range" id="c4" min="0" max="10" value="0" oninput="document.getElementById('v4').innerText=this.value">
-                    <span class="score-val" id="v4">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>5. Aplicabilidade (20) <span class="help-icon" data-help="Resultados aplicáveis na prática clínica ou gestão.">?</span></label>
-                    <input type="range" id="c5" min="0" max="20" value="0" oninput="document.getElementById('v5').innerText=this.value">
-                    <span class="score-val" id="v5">0</span>
-                </div>
-                <div class="criterio-row">
-                    <label>6. Originalidade (20) <span class="help-icon" data-help="Ideias originais ou nova perspectiva.">?</span></label>
-                    <input type="range" id="c6" min="0" max="20" value="0" oninput="document.getElementById('v6').innerText=this.value">
-                    <span class="score-val" id="v6">0</span>
-                </div>
-                
-                <label>Comentários:</label>
-                <textarea id="avObs" placeholder="Observações adicionais..."></textarea>
-                
-                <button onclick="enviarAvaliacao('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px">ENVIAR PARA PLANILHA</button>
+                <div class="criterio-row"><label>1. Relevância (20) <span class="help-icon" data-help="Importância para a Enfermagem.">?</span></label><input type="range" id="c1" min="0" max="20" value="0" oninput="document.getElementById('v1').innerText=this.value"><span class="score-val" id="v1">0</span></div>
+                <div class="criterio-row"><label>2. Metodologia (10) <span class="help-icon" data-help="Validade dos resultados.">?</span></label><input type="range" id="c2" min="0" max="10" value="0" oninput="document.getElementById('v2').innerText=this.value"><span class="score-val" id="v2">0</span></div>
+                <div class="criterio-row"><label>3. Visual (10) <span class="help-icon" data-help="Clareza do poster.">?</span></label><input type="range" id="c3" min="0" max="10" value="0" oninput="document.getElementById('v3').innerText=this.value"><span class="score-val" id="v3">0</span></div>
+                <div class="criterio-row"><label>4. Oral (10) <span class="help-icon" data-help="Domínio do tema.">?</span></label><input type="range" id="c4" min="0" max="10" value="0" oninput="document.getElementById('v4').innerText=this.value"><span class="score-val" id="v4">0</span></div>
+                <div class="criterio-row"><label>5. Aplicabilidade (20) <span class="help-icon" data-help="Prática clínica.">?</span></label><input type="range" id="c5" min="0" max="20" value="0" oninput="document.getElementById('v5').innerText=this.value"><span class="score-val" id="v5">0</span></div>
+                <div class="criterio-row"><label>6. Originalidade (20) <span class="help-icon" data-help="Inovação.">?</span></label><input type="range" id="c6" min="0" max="20" value="0" oninput="document.getElementById('v6').innerText=this.value"><span class="score-val" id="v6">0</span></div>
+                <textarea id="avObs" placeholder="Observações..."></textarea>
+                <button onclick="enviarAvaliacao('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px">ENVIAR AVALIAÇÃO</button>
                 <button onclick="document.getElementById('mNota').remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Cancelar</button>
             </div>`;
         document.body.appendChild(modal);
@@ -287,33 +267,17 @@
 
     async function enviarAvaliacao(id) {
         const nome = document.getElementById('avNome').value.trim();
-        if(!nome) { alert("Por favor, informe seu nome."); return; }
-        
+        if(!nome) { alert("Informe seu nome."); return; }
         setSync(true, "Enviando...");
-        const n1 = parseInt(document.getElementById('c1').value);
-        const n2 = parseInt(document.getElementById('c2').value);
-        const n3 = parseInt(document.getElementById('c3').value);
-        const n4 = parseInt(document.getElementById('c4').value);
-        const n5 = parseInt(document.getElementById('c5').value);
-        const n6 = parseInt(document.getElementById('c6').value);
-        
-        const dados = {
-            id: id, avaliador: nome,
-            c1: n1, c2: n2, c3: n3, c4: n4, c5: n5, c6: n6,
-            total: (n1+n2+n3+n4+n5+n6),
-            obs: document.getElementById('avObs').value,
-            presenca: true
-        };
+        const notas = [parseInt(c1.value), parseInt(c2.value), parseInt(c3.value), parseInt(c4.value), parseInt(c5.value), parseInt(c6.value)];
+        const total = notas.reduce((a,b) => a+b, 0);
+        const dados = { id, avaliador: nome, c1: notas[0], c2: notas[1], c3: notas[2], c4: notas[3], c5: notas[4], c6: notas[5], total, obs: avObs.value, presenca: true };
 
         try {
             await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
             alert("Avaliação Registrada!");
             location.reload();
-        } catch (e) {
-            alert("Erro na conexão.");
-        } finally {
-            setSync(false, "Sincronizado");
-        }
+        } catch (e) { alert("Erro ao enviar."); }
     }
 
     function filtrar() {
@@ -322,9 +286,9 @@
         const s = document.getElementById('fSit').value;
         const p = document.getElementById('fPDF').value;
         const a = document.getElementById('fAval').value;
-        let cTotal = 0, cFilt = 0, cPres = 0, cPdf = 0;
+        let cT = 0, cF = 0, cP = 0, cPd = 0;
         document.querySelectorAll("#tabelaAdmin tr").forEach(tr => {
-            cTotal++;
+            cT++;
             const match = tr.innerText.toLowerCase().includes(v) && 
                           (m === "todos" || tr.getAttribute('data-mod') === m) &&
                           (s === "todos" || tr.getAttribute('data-sit') === s) &&
@@ -332,21 +296,15 @@
                           (a === "todos" || tr.getAttribute('data-aval') === a);
             tr.style.display = match ? "" : "none";
             if(match) {
-                cFilt++;
-                if(tr.querySelector('.btn-check').classList.contains('checked')) cPres++;
-                if(tr.getAttribute('data-pdf') === 'sim') cPdf++;
+                cF++;
+                if(tr.querySelector('.btn-check').classList.contains('checked')) cP++;
+                if(tr.getAttribute('data-pdf') === 'sim') cPd++;
             }
         });
-        document.getElementById('stat-total').innerText = cTotal;
-        document.getElementById('stat-filt').innerText = cFilt;
-        document.getElementById('stat-pres').innerText = cPres;
-        document.getElementById('stat-pdf').innerText = cPdf;
-    }
-
-    function togglePresenca(id) {
-        const atual = localStorage.getItem(`pres-${id}`) === 'true';
-        localStorage.setItem(`pres-${id}`, !atual);
-        location.reload(); 
+        document.getElementById('stat-total').innerText = cT;
+        document.getElementById('stat-filt').innerText = cF;
+        document.getElementById('stat-pres').innerText = cP;
+        document.getElementById('stat-pdf').innerText = cPd;
     }
 
     function play(id) { localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", idSelecionado: id, modoApresentacao: true })); location.reload(); }
