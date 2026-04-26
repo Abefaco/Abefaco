@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel CBEFC 2026 - Gestão Completa</title>
+    <title>Painel CBEFC 2026 - Gestão e Visualização</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --cinza: #6c757d; }
@@ -16,23 +16,27 @@
 
         .container { max-width: 1350px; margin: 0 auto; padding: 20px; }
         
+        /* Filtros Administrativos */
         .controles-gestao { 
             display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
             gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; font-size: 0.85rem; }
 
+        /* Tabela */
         .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; min-width: 1100px; }
         th { background: var(--azul); color: white; padding: 12px; text-align: left; font-size: 0.85rem; }
         td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
 
+        /* Botões */
         .btn-check { background: #eee; border: 2px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: transparent; font-weight: bold; line-height: 24px; text-align: center; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
         
         .btn-play { background: var(--verde); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-avaliar { background: var(--azul); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
 
+        /* Ponto de interrogação maior */
         .help-icon {
             display: inline-block; width: 26px; height: 26px; background: var(--cinza); color: white;
             border-radius: 50%; text-align: center; font-size: 18px; cursor: help; line-height: 26px;
@@ -43,6 +47,7 @@
             background: #212529; color: white; padding: 12px; border-radius: 6px; width: 260px; font-weight: normal; z-index: 9999; font-size: 12px; line-height: 1.4; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
+        /* Modal e Campo de Comentários */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 15px; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; }
         .criterio-row { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
@@ -51,15 +56,14 @@
         
         textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; resize: none; font-family: inherit; margin-top: 10px; box-sizing: border-box; }
         
-        /* Ajuste do container para o PDF preencher a tela */
-        #pdfContainer { width: 100%; height: 82vh; background: #525659; border-radius: 8px; overflow: hidden; position: relative; }
-        embed { width: 100%; height: 100%; border: none; }
+        /* Iframe focado no PDF sem barras */
+        iframe { width: 100%; height: 82vh; border: none; border-radius: 8px; background: #525659; }
     </style>
 </head>
 <body>
 
 <header>
-    <img src="logo.png" alt="Logo" style="height: 45px;">
+    <img src="logo.png" alt="ABEFACO" style="height: 45px;">
     <div id="identificacao" style="font-weight: bold; color: var(--azul);">AUTENTICANDO...</div>
     <div>
         <button id="btnVoltarAdmin" style="display:none; background:#666; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;" onclick="voltarParaAdmin()">Painel Principal</button>
@@ -68,7 +72,7 @@
 </header>
 
 <div class="container" id="areaConteudo">
-    <div style="text-align:center; padding-top:100px;">Carregando poster...</div>
+    <div style="text-align:center; padding-top:100px;">Carregando dados...</div>
 </div>
 
 <script>
@@ -76,17 +80,21 @@
     let bancoDeDadosCompleto = {};
     const sessao = JSON.parse(localStorage.getItem('trabalhoAtivo'));
 
+    // Proteção de rota
     if (!sessao) { window.location.href = "index.html"; }
 
-    const idSessao = sessao.Número ? String(sessao.Número).trim() : "";
+    // Garante que o ID da sessão seja String para busca no CSV e pasta
+    const idSessaoRaw = sessao.Número ? sessao.Número : "";
+    const idSessao = String(idSessaoRaw).trim();
 
     window.onload = () => {
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
+                // Mapeia o CSV garantindo proteção contra 'undefined'
                 results.data.forEach(row => { 
-                    const idTrabalho = row.Número ? String(row.Número).trim() : null;
-                    if(idTrabalho) bancoDeDadosCompleto[idTrabalho] = row; 
+                    const idTrabalhoRow = row.Número ? String(row.Número).trim() : null;
+                    if(idTrabalhoRow) bancoDeDadosCompleto[idTrabalhoRow] = row; 
                 });
                 direcionarFluxo(results.data);
             }
@@ -98,6 +106,7 @@
             document.getElementById('identificacao').innerText = "PAINEL ADMINISTRADOR";
             renderizarPainelAdmin(listaCSV);
         } else {
+            // Se for login de ID comum ou ADMIN em modo "Play"
             const idAlvo = sessao.modoApresentacao ? String(sessao.idSelecionado).trim() : idSessao;
             document.getElementById('identificacao').innerText = "TRABALHO ID: " + idAlvo;
             if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
@@ -110,24 +119,23 @@
         const trab = bancoDeDadosCompleto[id];
         const titulo = (trab && trab.Título) ? trab.Título : "Trabalho ID " + id;
         
-        // Estratégia de URL para ocultar barras no Chrome/Edge
-        // view=FitH (ajusta à largura)
-        const caminhoPDF = `posters/${id}.pdf#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
+        // Parâmetros para ocultar barra do PDF no Chrome/Edge
+        const caminhoPDF = `posters/${id}.pdf#toolbar=0&navpanes=0&scrollbar=0`;
 
-        area.innerHTML = `<h2 style="color:var(--azul); margin-bottom:20px;">${titulo}</h2><div id="pdfContainer">Verificando arquivo...</div>`;
+        area.innerHTML = `<h2 style="color:var(--azul); margin-bottom:20px;">${titulo}</h2><div id="pdfBox">Verificando arquivo...</div>`;
         
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
             if (res.ok) {
-                // Mudança de iframe para embed para melhor suporte a parâmetros de PDF
-                document.getElementById('pdfContainer').innerHTML = `
-                    <embed src="${caminhoPDF}" type="application/pdf">
-                `;
+                document.getElementById('pdfBox').innerHTML = `<iframe src="${caminhoPDF}"></iframe>`;
             } else {
                 const forms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
-                document.getElementById('pdfContainer').innerHTML = `<div style="text-align:center; padding:30px; background:#fffbe6; border-radius:10px;"><h3>PDF Pendente</h3><iframe src="${forms}" style="width:100%; height:500px; background:white; border:none;"></iframe></div>`;
+                document.getElementById('pdfBox').innerHTML = `
+                    <div style="text-align:center; padding:30px; background:#fffbe6; border-radius:10px; border:1px solid #ffe58f;">
+                        <h3 style="color:#856404;">PDF não localizado na pasta /posters</h3>
+                        <p>O arquivo para o ID <b>${id}</b> não foi encontrado.</p>
+                        <iframe src="${forms}" style="width:100%; height:500px; background:white; border:none;"></iframe>
+                    </div>`;
             }
-        }).catch(() => {
-            document.getElementById('pdfContainer').innerHTML = `<embed src="${caminhoPDF}" type="application/pdf">`;
         });
     }
 
@@ -135,9 +143,9 @@
         const area = document.getElementById('areaConteudo');
         area.innerHTML = `
             <div class="controles-gestao">
-                <input type="text" id="busca" onkeyup="filtrar()" placeholder="ID ou Título...">
-                <select id="fMod" onchange="filtrar()"><option value="todos">Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
-                <select id="fSit" onchange="filtrar()"><option value="todos">Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
+                <input type="text" id="busca" onkeyup="filtrar()" placeholder="Buscar ID ou Título...">
+                <select id="fMod" onchange="filtrar()"><option value="todos">Todas Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
+                <select id="fSit" onchange="filtrar()"><option value="todos">Todas Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
                 <select id="fPDF" onchange="filtrar()"><option value="todos">Status PDF</option><option value="sim">Enviado</option><option value="nao">Pendente</option></select>
             </div>
             <div class="table-container"><table>
@@ -145,15 +153,23 @@
                 <tbody id="tabelaAdmin"></tbody>
             </table></div>`;
 
+        const tbody = document.getElementById('tabelaAdmin');
         lista.forEach(row => {
             const id = row.Número ? String(row.Número).trim() : null;
             if(!id) return;
             const presLocal = localStorage.getItem(`pres-${id}`) === 'true';
+
             const tr = document.createElement('tr');
             tr.setAttribute('data-mod', (row.modalidade || "").includes('Oral') ? 'Oral' : 'e-Poster');
             tr.setAttribute('data-sit', (row.Situação || "").trim());
-            tr.innerHTML = `<td style="text-align:center;"><button id="check-${id}" class="btn-check ${presLocal ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td><td><b>${id}</b></td><td><div style="font-weight:bold;">${row.Título || "Sem título"}</div><small>${row.Autores || ""}</small></td><td id="st-${id}">...</td><td id="acoes-${id}"></td>`;
-            document.getElementById('tabelaAdmin').appendChild(tr);
+            
+            tr.innerHTML = `
+                <td style="text-align:center;"><button id="check-${id}" class="btn-check ${presLocal ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
+                <td><b>${id}</b></td>
+                <td><div style="font-weight:bold;">${row.Título || "Sem título"}</div><small>${row.Autores || ""}</small></td>
+                <td id="st-${id}">...</td>
+                <td id="acoes-${id}"></td>`;
+            tbody.appendChild(tr);
             verificarStatusAdmin(id, presLocal, tr);
         });
     }
@@ -163,7 +179,7 @@
         const novoStatus = !btn.classList.contains('checked');
         btn.classList.toggle('checked', novoStatus);
         localStorage.setItem(`pres-${id}`, novoStatus);
-        location.reload(); 
+        location.reload(); // Recarrega para aplicar a liberação do botão avaliar
     }
 
     function verificarStatusAdmin(id, pres, tr) {
