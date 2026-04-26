@@ -15,6 +15,7 @@
             min-height: 100vh; width: 100%; position: relative;
         }
 
+        /* Efeito de Blur no Fundo */
         .bg-overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0, 0, 0, 0.2); 
@@ -90,6 +91,10 @@
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
+    
+    // LINK QUE VOCÊ ENVIOU
+    const FORM_SUBMISSAO_URL = "https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform";
+
     let bancoDeDadosCompleto = [];
     let avaliacoesGlobais = [];
     const sessao = JSON.parse(localStorage.getItem('trabalhoAtivo'));
@@ -101,7 +106,7 @@
         try {
             const resp = await fetch(GOOGLE_SCRIPT_URL);
             avaliacoesGlobais = await resp.json();
-        } catch(e) { console.warn("Google Sheets offline."); }
+        } catch(e) { console.warn("Erro ao ler Planilha."); }
 
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
@@ -137,7 +142,7 @@
         area.innerHTML = `
             <div class="admin-content-box">
                 <h2 style="color:var(--azul); margin-bottom:20px;">${titulo}</h2>
-                <div id="pdfSpace">Verificando arquivo no servidor...</div>
+                <div id="pdfSpace">Verificando arquivo...</div>
             </div>`;
         
         if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
@@ -146,12 +151,12 @@
             if (res.ok) {
                 document.getElementById('pdfSpace').innerHTML = `<embed src="${caminhoPDF}" type="application/pdf">`;
             } else {
-                const forms = `https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform?embedded=true&entry.1292953747=${id}`;
+                const formsPreenchido = `${FORM_SUBMISSAO_URL}?embedded=true&entry.1292953747=${id}`;
                 document.getElementById('pdfSpace').innerHTML = `
                     <div style="text-align:center; padding:30px; background:#fffbe6; border-radius:10px; border:1px solid #ffe58f;">
-                        <h3 style="color:#856404;">PDF não localizado</h3>
-                        <p>O arquivo para o ID <b>${id}</b> não foi encontrado. Utilize o formulário abaixo para submeter:</p>
-                        <iframe src="${forms}" style="width:100%; height:550px; background:white; border:none;"></iframe>
+                        <h3 style="color:#856404;">e-Pôster não localizado</h3>
+                        <p>O arquivo para o ID <b>${id}</b> não foi encontrado. Submeta-o abaixo:</p>
+                        <iframe src="${formsPreenchido}" style="width:100%; height:600px; background:white; border:none;"></iframe>
                     </div>`;
             }
         }).catch(() => {
@@ -280,8 +285,8 @@
     }
 
     function togglePresenca(id) {
-        const btn = document.getElementById(`check-${id}`);
-        localStorage.setItem(`pres-${id}`, !btn.classList.contains('checked'));
+        const statusAtual = localStorage.getItem(`pres-${id}`) === 'true';
+        localStorage.setItem(`pres-${id}`, !statusAtual);
         location.reload(); 
     }
 
