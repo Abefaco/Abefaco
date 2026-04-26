@@ -9,18 +9,18 @@
         :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --cinza: #6c757d; }
         body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; }
 
-        /* Fundo Maceió Unificado */
+        /* FUNDO UNIFICADO */
         .bg-dashboard {
             background-image: url('fundo-maceio.png');
             background-size: cover; background-position: center; background-attachment: fixed;
             min-height: 100vh; width: 100%; position: relative;
         }
 
-        /* Overlay Azul com Blur (Igual à tela inicial) */
+        /* OVERLAY AZUL + BLUR */
         .bg-overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0, 84, 166, 0.4); /* Mesmo azul 40% da página de login */
-            backdrop-filter: blur(8px); /* Efeito de desfoque */
+            background: rgba(0, 84, 166, 0.4); 
+            backdrop-filter: blur(8px);
             z-index: 1; 
         }
 
@@ -36,7 +36,6 @@
 
         .container { position: relative; z-index: 10; max-width: 1350px; margin: 0 auto; padding: 90px 20px 40px 20px; }
         
-        /* Caixa Branca de Conteúdo */
         .admin-content-box {
             background: rgba(255, 255, 255, 0.94); padding: 25px; border-radius: 15px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.3);
@@ -93,6 +92,8 @@
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
+    
+    // LINK DO FORMULÁRIO TRAVADO
     const FORM_SUBMISSAO_URL = "https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform";
 
     let bancoDeDadosCompleto = [];
@@ -106,7 +107,7 @@
         try {
             const resp = await fetch(GOOGLE_SCRIPT_URL);
             avaliacoesGlobais = await resp.json();
-        } catch(e) { console.warn("Planilha Offline."); }
+        } catch(e) { console.warn("Google Sheets Offline."); }
 
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
@@ -142,7 +143,7 @@
         area.innerHTML = `
             <div class="admin-content-box">
                 <h2 style="color:var(--azul); margin-bottom:20px;">${titulo}</h2>
-                <div id="pdfSpace">Verificando arquivo...</div>
+                <div id="pdfSpace">Verificando arquivo no servidor...</div>
             </div>`;
         
         if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
@@ -160,7 +161,9 @@
                     </div>`;
             }
         }).catch(() => {
-            document.getElementById('pdfSpace').innerHTML = `<embed src="${caminhoPDF}" type="application/pdf">`;
+            const formsPreenchido = `${FORM_SUBMISSAO_URL}?embedded=true&entry.1292953747=${id}`;
+            document.getElementById('pdfSpace').innerHTML = `
+                <iframe src="${formsPreenchido}" style="width:100%; height:600px; background:white; border:none;"></iframe>`;
         });
     }
 
@@ -177,7 +180,7 @@
                 <div class="controles-gestao">
                     <input type="text" id="busca" onkeyup="filtrar()" placeholder="Pesquisar ID, Título ou Autor...">
                     <select id="fMod" onchange="filtrar()"><option value="todos">Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
-                    <select id="fSit" onchange="filtrar()"><option value="todos">Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
+                    <select id="fSit" onchange="filtrar()"><option value="todos">Todas Situações</option><option value="Aprovado">Aprovado</option><option value="Não Aprovado">Não Aprovado</option></select>
                     <select id="fPDF" onchange="filtrar()"><option value="todos">Status PDF</option><option value="sim">Enviado</option><option value="nao">Pendente</option></select>
                     <select id="fAval" onchange="filtrar()"><option value="todos">Avaliação</option><option value="sim">Avaliado</option><option value="nao">Pendente</option></select>
                 </div>
