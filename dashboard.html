@@ -9,14 +9,12 @@
         :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --cinza: #6c757d; }
         body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; }
 
-        /* FUNDO UNIFICADO */
         .bg-dashboard {
             background-image: url('fundo-maceio.png');
             background-size: cover; background-position: center; background-attachment: fixed;
             min-height: 100vh; width: 100%; position: relative;
         }
 
-        /* OVERLAY AZUL + BLUR */
         .bg-overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0, 84, 166, 0.4); 
@@ -93,8 +91,8 @@
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
     
-    // LINK DO FORMULÁRIO TRAVADO
-    const FORM_SUBMISSAO_URL = "https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform";
+    // LINK DO FORMULÁRIO DEFINITIVO
+    const LINK_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSd6X6QqSvTAFbpl91uWaYqtuArEQ2V9D0h2MZX_jtrT8gkSbQ/viewform";
 
     let bancoDeDadosCompleto = [];
     let avaliacoesGlobais = [];
@@ -152,19 +150,21 @@
             if (res.ok) {
                 document.getElementById('pdfSpace').innerHTML = `<embed src="${caminhoPDF}" type="application/pdf">`;
             } else {
-                const formsPreenchido = `${FORM_SUBMISSAO_URL}?embedded=true&entry.1292953747=${id}`;
-                document.getElementById('pdfSpace').innerHTML = `
-                    <div style="text-align:center; padding:30px; background:#fffbe6; border-radius:10px; border:1px solid #ffe58f;">
-                        <h3 style="color:#856404;">e-Pôster não localizado</h3>
-                        <p>O arquivo para o ID <b>${id}</b> não foi encontrado.</p>
-                        <iframe src="${formsPreenchido}" style="width:100%; height:600px; background:white; border:none;"></iframe>
-                    </div>`;
+                exibirFormulario(id);
             }
         }).catch(() => {
-            const formsPreenchido = `${FORM_SUBMISSAO_URL}?embedded=true&entry.1292953747=${id}`;
-            document.getElementById('pdfSpace').innerHTML = `
-                <iframe src="${formsPreenchido}" style="width:100%; height:600px; background:white; border:none;"></iframe>`;
+            exibirFormulario(id);
         });
+    }
+
+    function exibirFormulario(id) {
+        const urlComId = `${LINK_FORM}?embedded=true&entry.1292953747=${id}`;
+        document.getElementById('pdfSpace').innerHTML = `
+            <div style="text-align:center; padding:30px; background:#fffbe6; border-radius:10px; border:1px solid #ffe58f;">
+                <h3 style="color:#856404;">e-Pôster não localizado</h3>
+                <p>O arquivo para o ID <b>${id}</b> não foi encontrado. Utilize o formulário abaixo para submeter:</p>
+                <iframe src="${urlComId}" style="width:100%; height:600px; background:white; border:none;"></iframe>
+            </div>`;
     }
 
     function renderizarPainelAdmin() {
