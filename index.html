@@ -3,149 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - CBEFC 2026</title>
+    <title>CBEFC 2026 - Consulta de Trabalhos</title>
     <style>
-        :root { --azul: #0054A6; --branco: #ffffff; }
-        
-        body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        :root { 
+            --azul: #0054A6; 
+            --branco: #ffffff; 
+            --sombra: rgba(0, 0, 0, 0.2);
+        }
 
-        /* Container do Fundo com a Imagem */
-        .bg-container {
-            background-image: url('fundo-maceio.png'); /* Nome da sua imagem */
-            background-size: cover;
+        body, html { 
+            height: 100%; 
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            overflow: hidden;
+        }
+
+        /* Fundo com imagem de Maceió */
+        .bg-image {
+            background-image: url('fundo-maceio.png');
+            height: 100%;
             background-position: center;
             background-repeat: no-repeat;
-            height: 100%;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-size: cover;
             position: relative;
         }
 
-        /* Camada de Transparência (Overlay) */
-        .bg-overlay {
+        /* Overlay Azul Translúcido (Identidade Visual) */
+        .overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 84, 166, 0.4); /* Azul do evento com 40% de opacidade */
-            z-index: 1;
+            background: rgba(0, 84, 166, 0.4); /* Azul Abefaco com 40% de opacidade */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* Cartão de Login (Janela por cima) */
-        .login-card {
-            background: rgba(255, 255, 255, 0.95); /* Branco quase opaco */
+        /* Caixa de Busca Centralizada */
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 360px;
+            box-shadow: 0 8px 32px var(--sombra);
             text-align: center;
-            z-index: 10; /* Garante que fique por cima de tudo */
-            border-top: 6px solid var(--azul);
-            backdrop-filter: blur(5px); /* Efeito de vidro embaçado leve */
-        }
-
-        .login-card img { max-width: 160px; margin-bottom: 25px; }
-        .login-card h3 { color: var(--azul); margin-top: 0; margin-bottom: 20px; }
-
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; color: var(--azul); font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
-        
-        input {
             width: 100%;
-            padding: 12px 15px;
-            margin: 0;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 16px;
-            transition: 0.3s;
+            max-width: 450px;
+            border-bottom: 5px solid var(--azul);
         }
-        input:focus { border-color: var(--azul); outline: none; box-shadow: 0 0 8px rgba(0,84,166,0.2); }
 
-        button {
+        .logo {
+            width: 180px;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            color: var(--azul);
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        p {
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 30px; /* Estilo Google */
+            outline: none;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--azul);
+            box-shadow: 0 0 10px rgba(0, 84, 166, 0.2);
+        }
+
+        .btn-search {
             width: 100%;
             padding: 15px;
             background-color: var(--azul);
             color: white;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
+            border-radius: 30px;
+            font-size: 1rem;
             font-weight: bold;
-            font-size: 17px;
-            margin-top: 15px;
-            transition: 0.3s;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
         }
-        button:hover { background-color: #003d7a; transform: translateY(-2px); }
 
-        #areaSenha { display: none; margin-top: 10px; }
-        
-        .footer-creditos { position: absolute; bottom: 10px; color: white; z-index: 10; font-size: 0.8rem; opacity: 0.8; }
+        .btn-search:hover {
+            background-color: #003d7a;
+            transform: translateY(-2px);
+        }
+
+        .footer-text {
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: #888;
+        }
     </style>
 </head>
 <body>
 
-<div class="bg-container">
-    <div class="bg-overlay"></div>
-    
-    <div class="login-card">
-        <img src="logo.png" alt="CBEFC 2026">
-        <h3>Acesso ao Sistema</h3>
-        
-        <div class="input-group">
-            <label for="usuarioID">ID do Trabalho</label>
-            <input type="text" id="usuarioID" placeholder="Ex: 1417232" oninput="monitorarAdmin(this.value)">
-        </div>
-        
-        <div id="areaSenha" class="input-group">
-            <label for="senhaAdmin">Senha Administrativa</label>
-            <input type="password" id="senhaAdmin" placeholder="******">
-        </div>
+    <div class="bg-image">
+        <div class="overlay">
+            <div class="login-box">
+                <img src="logo.png" alt="Logo CBEFC" class="logo">
+                <h2>Consulta de Trabalhos</h2>
+                <p>Busque por ID, Título, Autor ou E-mail</p>
 
-        <button onclick="tentarLogin()">Entrar</button>
+                <div class="search-container">
+                    <input type="text" id="campoBusca" placeholder="O que você procura?" onkeypress="checkEnter(event)">
+                </div>
+
+                <button class="btn-search" onclick="executarAcesso()">Pesquisar no Congresso</button>
+
+                <div class="footer-text">
+                    Associação Brasileira de Enfermagem de Família e Comunidade (ABEFACO)
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <div class="footer-creditos">Foto: Maceió, Alagoas - Local do Evento</div>
-</div>
 
-<script>
-    // Se já estiver logado, envia para o dashboard
-    if(localStorage.getItem('trabalhoAtivo')) { window.location.href = "dashboard.html"; }
-
-    function monitorarAdmin(valor) {
-        const areaSenha = document.getElementById('areaSenha');
-        // Verifica se é o e-mail do admin para mostrar o campo da senha
-        if (valor.trim().toLowerCase() === "abefaco@gmail.com") {
-            areaSenha.style.display = "block";
-        } else {
-            areaSenha.style.display = "none";
-        }
-    }
-
-    function tentarLogin() {
-        const idRaw = document.getElementById('usuarioID').value;
-        const id = idRaw.trim();
-        const senha = document.getElementById('senhaAdmin').value;
-
-        if (id === "") { alert("Por favor, informe seu ID."); return; }
-
-        // Lógica Administrativa
-        if (id.toLowerCase() === "abefaco@gmail.com") {
-            if (senha === "092026") {
-                localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN" }));
-                window.location.href = "dashboard.html";
-            } else {
-                alert("Senha administrativa incorreta!");
+    <script>
+        // Função para permitir busca ao apertar "Enter"
+        function checkEnter(e) {
+            if (e.key === 'Enter') {
+                executarAcesso();
             }
-            return;
         }
 
-        // Lógica de Autor/Apresentador (Entra direto com o ID)
-        // Guardamos o ID puro para buscar no CSV e na pasta de posters
-        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: id }));
-        window.location.href = "dashboard.html";
-    }
-</script>
+        function executarAcesso() {
+            const valor = document.getElementById('campoBusca').value.trim();
 
+            if (!valor) {
+                alert("Por favor, digite um termo para a pesquisa.");
+                return;
+            }
+
+            // Lógica de Redirecionamento
+            if (valor.toLowerCase() === "abefaco@gmail.com") {
+                // Acesso restrito para Administração
+                localStorage.setItem('trabalhoAtivo', JSON.stringify({ 
+                    Número: "ADMIN", 
+                    modoApresentacao: false 
+                }));
+            } else {
+                // Acesso Público: Qualquer outro termo é tratado como busca global
+                localStorage.setItem('trabalhoAtivo', JSON.stringify({ 
+                    Número: valor, 
+                    modoApresentacao: false 
+                }));
+            }
+
+            // Redireciona para o Dashboard que agora processa a busca
+            window.location.href = "dashboard.html";
+        }
+    </script>
 </body>
 </html>
