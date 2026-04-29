@@ -27,11 +27,11 @@
         #sync-indicator { display: none; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--cinza); font-weight: bold; }
         .dot { width: 10px; height: 10px; background: #ccc; border-radius: 50%; }
         .dot.active { background: #007bff; box-shadow: 0 0 8px #007bff; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
         .container { position: relative; z-index: 10; max-width: 1300px; margin: 0 auto; padding: 90px 20px 40px 20px; }
         .content-box { background: rgba(255, 255, 255, 0.96); padding: 25px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
 
-        /* ADMIN - STATS & FILTROS */
         .stats-bar { display: flex; gap: 15px; margin-bottom: 20px; }
         .stat-card { flex: 1; background: var(--azul); color: white; padding: 15px; border-radius: 10px; text-align: center; }
         .stat-card span { display: block; font-size: 1.5rem; font-weight: bold; }
@@ -45,18 +45,17 @@
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85rem; }
 
-        .btn-check { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; background: #fff; cursor: pointer; color: transparent; text-align:center; line-height:26px; }
+        .btn-check { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; background: #fff; cursor: default; color: transparent; text-align:center; line-height:26px; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
         .btn-play { background: var(--verde); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-eval { background: var(--azul); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
 
-        /* CRITÉRIOS NO MODAL */
-        .crit-row { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
-        .crit-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--azul); }
-        .help-icon { display: inline-block; width: 18px; height: 18px; background: #aaa; color: white; border-radius: 50%; text-align: center; font-size: 12px; cursor: help; margin-left: 5px; position: relative; }
-        .help-icon:hover::after { content: attr(data-help); position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); background: #212529; color: white; padding: 10px; border-radius: 6px; width: 200px; z-index: 100; font-size: 11px; font-weight: normal; }
-
-        iframe, embed { width: 100%; height: 75vh; border-radius: 8px; background: #333; border: none; }
+        .crit-row { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+        .crit-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--azul); font-size: 0.9rem; }
+        
+        iframe, embed { width: 100%; height: 78vh; border-radius: 8px; background: #333; border: none; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -68,7 +67,7 @@
         <div id="sync-indicator"><div class="dot" id="sync-dot"></div> <span id="sync-text">Sincronizando...</span></div>
         <div>
             <button id="btnVoltar" style="display:none; background:var(--cinza); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;" onclick="voltar()">← Voltar</button>
-            <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
+            <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair / Logout</button>
         </div>
     </header>
 
@@ -79,7 +78,9 @@
     const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
     let db = [];
     let cloudData = [];
-    const session = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    let session = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+
+    if (!session) window.location.href = "index.html";
 
     window.onload = () => {
         Papa.parse("database.csv", {
@@ -112,20 +113,19 @@
 
     function renderizarAdmin() {
         const area = document.getElementById('mainArea');
+        document.getElementById('btnVoltar').style.display = 'none'; 
         area.innerHTML = `
             <div class="content-box">
                 <div class="stats-bar">
                     <div class="stat-card"><span id="st-total">0</span><label>Total</label></div>
                     <div class="stat-card"><span id="st-pres">0</span><label>Presenças</label></div>
-                    <div class="stat-card"><span id="st-pend">0</span><label>Pendentes Envio</label></div>
+                    <div class="stat-card"><span id="st-pend">0</span><label>Sem PDF</label></div>
                 </div>
-                
                 <div class="controles-gestao">
                     <input type="text" id="buscaInt" onkeyup="filtrarTab()" placeholder="Filtrar por nome ou ID...">
                     <select id="fMod" onchange="filtrarTab()"><option value="todos">Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
                     <select id="fPdf" onchange="filtrarTab()"><option value="todos">Status PDF</option><option value="sim">Enviado</option><option value="nao">Pendente</option></select>
                 </div>
-
                 <div style="overflow-x:auto">
                     <table>
                         <thead><tr><th>Presença</th><th>ID</th><th>Título</th><th>PDF</th><th>Status</th><th>Ações</th></tr></thead>
@@ -135,14 +135,14 @@
                                 const isPres = cloudData.some(c => String(c.id) === id && c.presenca);
                                 const isAval = cloudData.some(c => String(c.id) === id && c.total > 0);
                                 return `<tr class="row-item" data-mod="${row.modalidade || ''}" data-aval="${isAval?'sim':'nao'}">
-                                    <td><button onclick="togglePres('${id}', this)" class="btn-check ${isPres?'checked':''}">✓</button></td>
+                                    <td><button class="btn-check ${isPres?'checked':''}">✓</button></td>
                                     <td><b>${id}</b></td>
-                                    <td>${row.Título.substring(0,60)}...</td>
+                                    <td>${row.Título.substring(0,55)}...</td>
                                     <td class="pdf-status" data-id="${id}">...</td>
                                     <td>${isAval ? '<b style="color:green">Avaliado</b>' : 'Pendente'}</td>
                                     <td>
-                                        <button onclick="renderizarPoster('${id}')" class="btn-play">Ver</button>
-                                        ${isPres ? `<button onclick="abrirAval('${id}')" class="btn-eval">Avaliar</button>` : ''}
+                                        <button onclick="verTrabalho('${id}')" class="btn-play">Ver</button>
+                                        <button onclick="abrirAval('${id}')" class="btn-eval">Avaliar</button>
                                     </td>
                                 </tr>`;
                             }).join('')}
@@ -150,16 +150,16 @@
                     </table>
                 </div>
             </div>`;
-        verificarPDFs();
+        verificarArquivos();
     }
 
-    function verificarPDFs() {
+    function verificarArquivos() {
         document.querySelectorAll('.pdf-status').forEach(td => {
             const id = td.dataset.id;
             fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
                 td.innerHTML = res.ok ? "✅" : "❌";
                 td.closest('tr').dataset.pdf = res.ok ? "sim" : "nao";
-                filtrarTab(); // Recalcula stats após checar arquivos
+                filtrarTab();
             });
         });
     }
@@ -168,60 +168,24 @@
         const termo = document.getElementById('buscaInt').value.toLowerCase();
         const mod = document.getElementById('fMod').value;
         const pdf = document.getElementById('fPdf').value;
-        
         let t = 0, p = 0, n = 0;
         document.querySelectorAll('.row-item').forEach(tr => {
             const match = tr.innerText.toLowerCase().includes(termo) && 
                           (mod === "todos" || tr.dataset.mod.includes(mod)) &&
                           (pdf === "todos" || tr.dataset.pdf === pdf);
             tr.style.display = match ? "" : "none";
-            if(match) {
-                t++;
-                if(tr.querySelector('.btn-check').classList.contains('checked')) p++;
-                if(tr.dataset.pdf === "nao") n++;
-            }
+            if(match) { t++; if(tr.querySelector('.btn-check').classList.contains('checked')) p++; if(tr.dataset.pdf === "nao") n++; }
         });
         document.getElementById('st-total').innerText = t;
         document.getElementById('st-pres').innerText = p;
         document.getElementById('st-pend').innerText = n;
     }
 
-    function abrirAval(id) {
-        const m = document.createElement('div');
-        m.className = 'modal'; m.id = 'mEval';
-        m.innerHTML = `
-            <div class="modal-content">
-                <h3 style="color:var(--azul)">Avaliação - ID ${id}</h3>
-                <input type="text" id="evNome" placeholder="Seu Nome" style="width:100%; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #ddd">
-                
-                ${[
-                    {n: "Relevância (20)", max: 20, h: "Impacto para a Enfermagem."},
-                    {n: "Metodologia (10)", max: 10, h: "Rigor científico."},
-                    {n: "Visual (10)", max: 10, h: "Design do poster."},
-                    {n: "Oral (10)", max: 10, h: "Domínio do tema."},
-                    {n: "Aplicabilidade (20)", max: 20, h: "Uso na prática clínica."},
-                    {n: "Originalidade (20)", max: 20, h: "Inovação."}
-                ].map((c, i) => `
-                    <div class="crit-row">
-                        <div class="crit-header"><span>${c.n} <span class="help-icon" data-help="${c.h}">?</span></span> <span id="v${i}">0</span></div>
-                        <input type="range" id="c${i}" min="0" max="${c.max}" value="0" style="width:100%" oninput="v${i}.innerText=this.value">
-                    </div>
-                `).join('')}
-
-                <button onclick="enviarAval('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px">ENVIAR</button>
-                <button onclick="mEval.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Cancelar</button>
-            </div>`;
-        document.body.appendChild(m);
-    }
-
-    async function enviarAval(id) {
-        const nome = document.getElementById('evNome').value;
-        if(!nome) return alert("Informe seu nome!");
-        setSync(true, "Enviando...");
-        const notas = [0,1,2,3,4,5].map(i => parseInt(document.getElementById(`c${i}`).value));
-        const total = notas.reduce((a,b)=>a+b, 0);
-        await fetch(GOOGLE_URL, { method:"POST", mode:"no-cors", body: JSON.stringify({id, avaliador: nome, total, presenca: true}) });
-        location.reload();
+    function verTrabalho(id) {
+        session.modoApresentacao = true;
+        session.idSelecionado = id;
+        localStorage.setItem('trabalhoAtivo', JSON.stringify(session));
+        renderizarPoster(id);
     }
 
     function renderizarPoster(id) {
@@ -231,18 +195,55 @@
         area.innerHTML = `<div class="content-box"><h2 style="color:var(--azul);">${trab?trab.Título:'ID '+id}</h2><div id="pdfSpace"></div></div>`;
         const path = `posters/${id}.pdf`;
         fetch(path, { method: 'HEAD' }).then(res => {
-            document.getElementById('pdfSpace').innerHTML = res.ok ? `<embed src="${path}#toolbar=0">` : `<div style="text-align:center; padding:40px;"><h3>PDF não encontrado.</h3></div>`;
+            document.getElementById('pdfSpace').innerHTML = res.ok ? `<embed src="${path}#toolbar=0">` : `<div style="text-align:center; padding:40px;"><h3>PDF não encontrado na pasta /posters/.</h3></div>`;
         });
     }
 
-    async function togglePres(id, btn) {
-        const isSet = btn.classList.contains('checked');
-        await fetch(GOOGLE_URL, { method:"POST", mode:"no-cors", body: JSON.stringify({id, presenca: !isSet, acao:"presenca_solo"}) });
+    function abrirAval(id) {
+        const m = document.createElement('div');
+        m.className = 'modal'; m.id = 'mEval';
+        m.innerHTML = `
+            <div class="modal-content">
+                <h3 style="color:var(--azul)">Avaliação - ID ${id}</h3>
+                <input type="text" id="evNome" placeholder="Nome do Avaliador" style="width:100%; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #ddd">
+                ${[
+                    {n: "1. Relevância (20)", max: 20}, {n: "2. Metodologia (10)", max: 10},
+                    {n: "3. Visual (10)", max: 10}, {n: "4. Oral (10)", max: 10},
+                    {n: "5. Aplicabilidade (20)", max: 20}, {n: "6. Originalidade (20)", max: 20}
+                ].map((c, i) => `
+                    <div class="crit-row">
+                        <div class="crit-header"><span>${c.n}</span> <span id="v${i}">0</span></div>
+                        <input type="range" id="c${i}" min="0" max="${c.max}" value="0" style="width:100%" oninput="document.getElementById('v${i}').innerText=this.value">
+                    </div>`).join('')}
+                <button onclick="enviarAval('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px">SALVAR E MARCAR PRESENÇA</button>
+                <button onclick="mEval.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Cancelar</button>
+            </div>`;
+        document.body.appendChild(m);
+    }
+
+    async function enviarAval(id) {
+        const nome = document.getElementById('evNome').value;
+        if(!nome) return alert("Informe seu nome!");
+        document.getElementById('sync-text').innerText = "Enviando...";
+        const notas = [0,1,2,3,4,5].map(i => parseInt(document.getElementById(`c${i}`).value));
+        const total = notas.reduce((a,b)=>a+b, 0);
+        const data = { id, avaliador: nome, total, presenca: true, c1:notas[0], c2:notas[1], c3:notas[2], c4:notas[3], c5:notas[4], c6:notas[5] };
+        await fetch(GOOGLE_URL, { method:"POST", mode:"no-cors", body: JSON.stringify(data) });
+        alert("Avaliação e Presença Registradas!");
         location.reload();
     }
 
-    function voltar() { location.href = "index.html"; }
-    function sair() { localStorage.removeItem('trabalhoAtivo'); location.href = "index.html"; }
+    function voltar() {
+        if (session.Número === "ADMIN") {
+            session.modoApresentacao = false;
+            localStorage.setItem('trabalhoAtivo', JSON.stringify(session));
+            renderizarAdmin();
+        } else {
+            sair();
+        }
+    }
+
+    function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
 </script>
 </body>
 </html>
