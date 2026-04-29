@@ -38,6 +38,16 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.3);
         }
 
+        /* Estilos para lista de resultados (Homonimos) */
+        .search-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border-bottom: 1px solid #ddd; transition: background 0.2s;
+        }
+        .search-item:hover { background: #f0f7ff; }
+        .search-info { flex-grow: 1; margin-right: 15px; }
+        .search-info b { color: var(--azul); display: block; margin-bottom: 4px; }
+        .search-info small { color: #555; }
+
         .stats-bar {
             display: flex; gap: 20px; margin-bottom: 20px; padding: 15px;
             background: var(--azul); color: white; border-radius: 10px; justify-content: space-around; text-align: center;
@@ -100,7 +110,7 @@
     if (!sessao) window.location.href = "index.html";
 
     window.onload = async () => {
-        setSync(true, "Carregando Planilha...");
+        setSync(true, "Carregando Dados...");
         try {
             const resp = await fetch(GOOGLE_SCRIPT_URL);
             avaliacoesGlobais = await resp.json();
@@ -122,13 +132,62 @@
     }
 
     function direcionarFluxo() {
-        const idSessao = sessao.Número ? String(sessao.Número).trim() : "";
-        if (idSessao === "ADMIN" && !sessao.modoApresentacao) {
+        const termoBusca = sessao.Número ? String(sessao.Número).trim().toLowerCase() : "";
+        
+        if (termoBusca === "admin" && !sessao.modoApresentacao) {
             renderizarPainelAdmin();
-        } else {
-            const idAlvo = sessao.modoApresentacao ? sessao.idSelecionado : idSessao;
-            renderizarPosterSolo(idAlvo);
+            return;
         }
+
+        if (sessao.modoApresentacao) {
+            renderizarPosterSolo(sessao.idSelecionado);
+            return;
+        }
+
+        // Busca múltipla: ID, Autor, Título ou Email
+        const resultados = bancoDeDadosCompleto.filter(row => {
+            const id = String(row.Número || "").toLowerCase();
+            const titulo = String(row.Título || "").toLowerCase();
+            const autores = String(row.Autores || "").toLowerCase();
+            const email = String(row.Email || "").toLowerCase();
+
+            return id === termoBusca || 
+                   titulo.includes(termoBusca) || 
+                   autores.includes(termoBusca) || 
+                   email === termoBusca;
+        });
+
+        if (resultados.length === 0) {
+            document.getElementById('areaConteudo').innerHTML = `<div class="admin-content-box" style="text-align:center"><h2>Nenhum trabalho encontrado.</h2><button onclick="sair()" class="btn-play" style="margin-top:10px">Voltar ao Login</button></div>`;
+        } else if (resultados.length === 1) {
+            renderizarPosterSolo(resultados[0].Número);
+        } else {
+            renderizarListaSelecao(resultados);
+        }
+    }
+
+    function renderizarListaSelecao(lista) {
+        const area = document.getElementById('areaConteudo');
+        area.innerHTML = `
+            <div class="admin-content-box">
+                <h2 style="color:var(--azul); margin-bottom:20px;">Encontramos ${lista.length} trabalhos relacionados:</h2>
+                <div id="listaHomonimos"></div>
+            </div>`;
+        
+        const containerLista = document.getElementById('listaHomonimos');
+        
+        lista.forEach(row => {
+            const div = document.createElement('div');
+            div.className = 'search-item';
+            div.innerHTML = `
+                <div class="search-info">
+                    <b>ID: ${row.Número} - ${row.Título}</b>
+                    <small>Autores: ${row.Autores}</small>
+                </div>
+                <button onclick="play('${row.Número}')" class="btn-play">Play / Exibir</button>
+            `;
+            containerLista.appendChild(div);
+        });
     }
 
     function renderizarPosterSolo(id) {
@@ -142,7 +201,16 @@
             <div id="pdfSpace">Verificando arquivo...</div>
         </div>`;
         
-        if(sessao.modoApresentacao) document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
+        // Se houver mais de um resultado no histórico ou for modo apresentação, permite voltar
+        document.getElementById('btnVoltarAdmin').style.display = 'inline-block';
+        document.getElementById('btnVoltarAdmin').onclick = () => {
+             // Se for admin, volta pro painel. Se for usuario com homonimos, volta pra lista
+             if(sessao.Número.toLowerCase() === 'admin') {
+                 voltarParaAdmin();
+             } else {
+                 location.reload(); 
+             }
+        };
 
         fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
             if (res.ok) {
@@ -156,6 +224,8 @@
             }
         });
     }
+
+    // ... (Mantém as funções renderizarPainelAdmin, verificarPDFLista, togglePresenca, abrirModalAvaliacao, enviarAvaliacao e filtrar inalteradas) ...
 
     function renderizarPainelAdmin() {
         const area = document.getElementById('areaConteudo');
@@ -183,16 +253,12 @@
         bancoDeDadosCompleto.forEach(row => {
             const id = row.Número ? String(row.Número).trim() : null;
             if(!id) return;
-            
-            // VERIFICA SE O ID TEM PRESENÇA NA PLANILHA ONLINE
             const temPresencaPlanilha = avaliacoesGlobais.some(a => String(a.id).trim() === id && (a.presenca === true || a.presenca === "TRUE"));
             const jaAvaliado = avaliacoesGlobais.some(a => String(a.id).trim() === id);
-            
             const tr = document.createElement('tr');
             tr.setAttribute('data-mod', (row.modalidade || "").includes('Oral') ? 'Oral' : 'e-Poster');
             tr.setAttribute('data-sit', (row.Situação || "").trim());
             tr.setAttribute('data-aval', jaAvaliado ? 'sim' : 'nao');
-
             tr.innerHTML = `
                 <td align="center"><button id="check-${id}" class="btn-check ${temPresencaPlanilha ? 'checked' : ''}" onclick="togglePresenca('${id}')">✓</button></td>
                 <td><b>${id}</b></td>
@@ -221,27 +287,14 @@
     async function togglePresenca(id) {
         const btn = document.getElementById(`check-${id}`);
         const estaMarcado = btn.classList.contains('checked');
-        
         if(!confirm(estaMarcado ? "Deseja remover a presença?" : "Deseja confirmar a presença deste trabalho?")) return;
-
         setSync(true, "Atualizando Planilha...");
-        
-        const dados = {
-            id: id,
-            presenca: !estaMarcado, // Envia o inverso do estado atual
-            avaliador: "Sistema de Presença",
-            total: 0, 
-            acao: "presenca_solo" // Flag opcional para seu script saber que é só presença
-        };
-
+        const dados = { id: id, presenca: !estaMarcado, avaliador: "Sistema de Presença", total: 0, acao: "presenca_solo" };
         try {
             await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
-            alert("Presença atualizada na planilha!");
-            location.reload(); // Recarrega para refletir o novo estado vindo da planilha
-        } catch (e) {
-            alert("Erro ao sincronizar. Tente novamente.");
-            setSync(false, "Erro de Conexão");
-        }
+            alert("Presença atualizada!");
+            location.reload();
+        } catch (e) { alert("Erro ao sincronizar."); setSync(false, "Erro"); }
     }
 
     function abrirModalAvaliacao(id) {
@@ -272,7 +325,6 @@
         const notas = [parseInt(c1.value), parseInt(c2.value), parseInt(c3.value), parseInt(c4.value), parseInt(c5.value), parseInt(c6.value)];
         const total = notas.reduce((a,b) => a+b, 0);
         const dados = { id, avaliador: nome, c1: notas[0], c2: notas[1], c3: notas[2], c4: notas[3], c5: notas[4], c6: notas[5], total, obs: avObs.value, presenca: true };
-
         try {
             await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(dados) });
             alert("Avaliação Registrada!");
@@ -307,7 +359,16 @@
         document.getElementById('stat-pdf').innerText = cPd;
     }
 
-    function play(id) { localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", idSelecionado: id, modoApresentacao: true })); location.reload(); }
+    function play(id) { 
+        // Salva que estamos visualizando um trabalho específico, mantendo o termo de busca original
+        localStorage.setItem('trabalhoAtivo', JSON.stringify({ 
+            Número: sessao.Número, 
+            idSelecionado: id, 
+            modoApresentacao: true 
+        })); 
+        location.reload(); 
+    }
+    
     function voltarParaAdmin() { localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", modoApresentacao: false })); location.reload(); }
     function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
 </script>
