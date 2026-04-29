@@ -43,7 +43,7 @@
         .stat-card span { display: block; font-size: 1.8rem; font-weight: bold; }
         .stat-card label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.8; }
 
-        /* TABELA E BUSCA */
+        /* CONTROLES E TABELA */
         .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; }
         .controls input, .controls select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
         
@@ -53,26 +53,26 @@
         td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
 
         /* BOTÕES */
-        .btn-play { background: var(--verde); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-eval { background: var(--azul); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-check { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; background: #fff; cursor: pointer; transition: 0.3s; }
+        .btn-play { background: var(--verde); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-eval { background: var(--azul); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: 5px; }
+        .btn-check { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; background: #fff; cursor: pointer; transition: 0.3s; color: transparent; font-weight: bold; text-align: center; line-height: 26px; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
 
-        /* LISTA PÚBLICA (HOMÔNIMOS) */
+        /* BUSCA (HOMÔNIMOS) */
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
-        .list-item:last-child { border: none; }
         .list-info b { color: var(--azul); display: block; font-size: 1rem; }
 
-        /* MODAL DE AVALIAÇÃO */
+        /* MODAL */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
         .modal-content { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
         .crit-row { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
-        .crit-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--azul); margin-bottom: 5px; }
-        .crit-row input[type=range] { width: 100%; }
+        .crit-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--azul); }
+        .score-val { color: var(--verde); font-size: 1.2rem; }
         
-        .help-icon { display: inline-block; width: 18px; height: 18px; background: #aaa; color: white; border-radius: 50%; text-align: center; font-size: 12px; cursor: help; margin-left: 5px; }
-        
-        iframe, embed { width: 100%; height: 75vh; border-radius: 8px; background: #333; }
+        .help-icon { display: inline-block; width: 18px; height: 18px; background: #aaa; color: white; border-radius: 50%; text-align: center; font-size: 12px; cursor: help; margin-left: 5px; position: relative; }
+        .help-icon:hover::after { content: attr(data-help); position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); background: #212529; color: white; padding: 10px; border-radius: 6px; width: 220px; font-size: 11px; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+
+        iframe, embed { width: 100%; height: 75vh; border-radius: 8px; background: #333; border: none; }
     </style>
 </head>
 <body>
@@ -83,7 +83,7 @@
         <img src="logo.png" alt="ABEFACO" style="height: 45px;">
         <div id="sync-indicator"><div class="dot" id="sync-dot"></div> <span id="sync-text">Sincronizado</span></div>
         <div>
-            <button id="btnVoltar" style="display:none; background:var(--cinza); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;" onclick="voltar()">← Voltar</button>
+            <button id="btnVoltar" style="display:none; background:var(--cinza); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;" onclick="voltar()">← Nova Busca</button>
             <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair</button>
         </div>
     </header>
@@ -101,99 +101,69 @@
 
     if (!session) window.location.href = "index.html";
 
-    window.onload = async () => {
-        setSync(true, "Conectando...");
-        try {
-            const r = await fetch(GOOGLE_URL);
-            cloudData = await r.json();
-        } catch(e) { console.error("Cloud offline"); }
-
+    window.onload = () => {
+        setSync(true, "Carregando CSV...");
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
             complete: (res) => {
                 db = res.data;
-                render();
-                setSync(false, "Sincronizado");
+                renderizarFluxo();
+                carregarCloud(); // Busca presenças e notas em background
             }
         });
     };
+
+    async function carregarCloud() {
+        try {
+            const r = await fetch(GOOGLE_URL);
+            cloudData = await r.json();
+            if(session.Número.toLowerCase() === 'admin') renderizarFluxo();
+            setSync(false, "Sincronizado");
+        } catch(e) { console.warn("Planilha offline."); }
+    }
 
     function setSync(on, txt) {
         document.getElementById('sync-dot').className = on ? 'dot active' : 'dot';
         document.getElementById('sync-text').innerText = txt;
     }
 
-    function render() {
+    function renderizarFluxo() {
         const area = document.getElementById('mainArea');
-        const query = session.Número.toLowerCase();
+        const termo = session.Número.toLowerCase();
 
-        // 1. ADMIN
-        if (query === "admin") {
+        if (termo === "admin") {
             renderAdmin(area);
             return;
         }
 
-        // 2. VISUALIZAÇÃO DE TRABALHO
         if (session.modoApresentacao) {
             renderPoster(area, session.idSelecionado);
             return;
         }
 
-        // 3. BUSCA PÚBLICA
+        // Busca local instantânea
         const results = db.filter(row => 
-            String(row.Número).toLowerCase() === query ||
-            String(row.Título).toLowerCase().includes(query) ||
+            String(row.Número).toLowerCase() === termo ||
+            String(row.Título).toLowerCase().includes(termo) ||
             String(row.Autores).toLowerCase().includes(termo)
         );
 
         if (results.length === 1) renderPoster(area, results[0].Número);
-        else if (results.length > 1) renderResults(area, results);
-        else area.innerHTML = `<div class="content-box"><h2>Nenhum resultado.</h2><button onclick="sair()">Nova busca</button></div>`;
+        else if (results.length > 1) renderListaBusca(area, results);
+        else area.innerHTML = `<div class="content-box"><h2>Nenhum resultado para "${session.Número}"</h2><button onclick="sair()" class="btn-play">Tentar novamente</button></div>`;
     }
 
-    function renderAdmin(area) {
+    function renderListaBusca(area, lista) {
         area.innerHTML = `
             <div class="content-box">
-                <div class="stats-bar">
-                    <div class="stat-card"><span id="s-total">0</span><label>Total</label></div>
-                    <div class="stat-card"><span id="s-pres">0</span><label>Presença</label></div>
-                    <div class="stat-card"><span id="s-aval">0</span><label>Avaliado</label></div>
-                </div>
-                <div class="controls">
-                    <input type="text" id="f-txt" onkeyup="filterAdmin()" placeholder="Buscar na lista...">
-                    <select id="f-mod" onchange="filterAdmin()"><option value="">Todas Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Presença</th><th>ID</th><th>Título</th><th>PDF</th><th>Status</th><th>Ações</th></tr></thead>
-                        <tbody id="adminBody"></tbody>
-                    </table>
-                </div>
+                <h2 style="color:var(--azul);">Resultados da pesquisa:</h2>
+                ${lista.map(r => `
+                    <div class="list-item">
+                        <div class="list-info"><b>ID ${r.Número}</b> ${r.Título} <br><small>${r.Autores}</small></div>
+                        <button onclick="play('${r.Número}')" class="btn-play">Visualizar</button>
+                    </div>
+                `).join('')}
             </div>`;
-        
-        const body = document.getElementById('adminBody');
-        db.forEach(row => {
-            const id = row.Número;
-            const isPres = cloudData.some(c => String(c.id) === String(id) && c.presenca);
-            const isAval = cloudData.some(c => String(c.id) === String(id) && c.total > 0);
-            
-            const tr = document.createElement('tr');
-            tr.className = 'row-item';
-            tr.dataset.mod = row.modalidade || "";
-            tr.innerHTML = `
-                <td><button onclick="togglePres('${id}', this)" class="btn-check ${isPres?'checked':''}">✓</button></td>
-                <td><b>${id}</b></td>
-                <td>${row.Título.substring(0,80)}...</td>
-                <td id="pdf-${id}">...</td>
-                <td>${isAval ? '<b style="color:green">Avaliado</b>' : 'Pendente'}</td>
-                <td>
-                    <button onclick="view('${id}')" class="btn-play">Ver</button>
-                    ${isPres ? `<button onclick="openEval('${id}')" class="btn-eval">Avaliar</button>` : ''}
-                </td>`;
-            body.appendChild(tr);
-            checkPDF(id);
-        });
-        filterAdmin();
     }
 
     function renderPoster(area, id) {
@@ -201,93 +171,102 @@
         const trab = db.find(r => String(r.Número) === String(id));
         area.innerHTML = `
             <div class="content-box">
-                <h2 style="color:var(--azul); margin-top:0;">${trab ? trab.Título : 'Trabalho '+id}</h2>
-                <div id="displayArea">Carregando PDF...</div>
+                <h2 style="color:var(--azul); margin-top:0;">${trab ? trab.Título : 'ID '+id}</h2>
+                <div id="pdfSpace">Verificando arquivo PDF...</div>
             </div>`;
         
         const path = `posters/${id}.pdf`;
         fetch(path, {method:'HEAD'}).then(r => {
-            if(r.ok) document.getElementById('displayArea').innerHTML = `<embed src="${path}#toolbar=0">`;
-            else document.getElementById('displayArea').innerHTML = `
-                <div style="text-align:center; padding:40px;">
-                    <h3>Arquivo pendente de upload.</h3>
-                    <a href="${FORM_URL}?entry.1292953747=${id}" target="_blank" class="btn-play" style="text-decoration:none">Fazer Upload Agora</a>
+            if(r.ok) document.getElementById('pdfSpace').innerHTML = `<embed src="${path}#toolbar=0">`;
+            else document.getElementById('pdfSpace').innerHTML = `
+                <div style="text-align:center; padding:40px; background:#fffbe6; border-radius:10px;">
+                    <h3>PDF não localizado.</h3>
+                    <p>ID do trabalho: <b>${id}</b></p>
+                    <a href="${FORM_URL}?entry.1292953747=${id}" target="_blank" class="btn-play" style="text-decoration:none">Enviar Agora</a>
                 </div>`;
         });
     }
 
-    function renderResults(area, lista) {
+    function renderAdmin(area) {
         area.innerHTML = `
             <div class="content-box">
-                <h2 style="color:var(--azul);">Resultados encontrados:</h2>
-                ${lista.map(r => `
-                    <div class="list-item">
-                        <div class="list-info"><b>ID ${r.Número}</b> ${r.Título}</div>
-                        <button onclick="view('${r.Número}')" class="btn-play">Abrir</button>
-                    </div>
-                `).join('')}
+                <div class="stats-bar">
+                    <div class="stat-card"><span>${db.length}</span><label>Cadastrados</label></div>
+                    <div class="stat-card"><span>${cloudData.length}</span><label>Avaliações</label></div>
+                </div>
+                <div class="controls">
+                    <input type="text" id="f-txt" onkeyup="filterAdmin()" placeholder="Filtrar nesta lista...">
+                    <select id="f-mod" onchange="filterAdmin()"><option value="">Todas Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Presença</th><th>ID</th><th>Título</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="adminBody">
+                            ${db.map(row => {
+                                const isPres = cloudData.some(c => String(c.id) === String(row.Número) && c.presenca);
+                                const isAval = cloudData.some(c => String(c.id) === String(row.Número) && c.total > 0);
+                                return `
+                                <tr class="row-item" data-mod="${row.modalidade || ''}">
+                                    <td><button onclick="togglePres('${row.Número}', this)" class="btn-check ${isPres?'checked':''}">✓</button></td>
+                                    <td><b>${row.Número}</b></td>
+                                    <td>${row.Título.substring(0,60)}...</td>
+                                    <td>${isAval ? '<b style="color:green">Avaliado</b>' : 'Pendente'}</td>
+                                    <td>
+                                        <button onclick="play('${row.Número}')" class="btn-play">Ver</button>
+                                        ${isPres ? `<button onclick="abrirAval('${row.Número}')" class="btn-eval">Avaliar</button>` : ''}
+                                    </td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
             </div>`;
-    }
-
-    // AÇÕES
-    function checkPDF(id) {
-        fetch(`posters/${id}.pdf`, {method:'HEAD'}).then(r => {
-            const el = document.getElementById(`pdf-${id}`);
-            if(el) {
-                el.innerHTML = r.ok ? "✅" : "❌";
-                el.closest('tr').dataset.haspdf = r.ok;
-            }
-        });
     }
 
     async function togglePres(id, btn) {
         const isSet = btn.classList.contains('checked');
         if(!confirm(isSet ? "Remover presença?" : "Confirmar presença?")) return;
-        setSync(true, "Sincronizando...");
+        setSync(true, "Atualizando nuvem...");
         await fetch(GOOGLE_URL, { method:"POST", mode:"no-cors", body: JSON.stringify({id, presenca: !isSet, acao:"presenca_solo"}) });
         location.reload();
     }
 
-    function openEval(id) {
+    function abrirAval(id) {
         const m = document.createElement('div');
-        m.className = 'modal'; m.id = 'evalModal';
+        m.className = 'modal'; m.id = 'mEval';
         m.innerHTML = `
             <div class="modal-content">
                 <h3 style="color:var(--azul)">Avaliação - ID ${id}</h3>
-                <input type="text" id="evalNome" placeholder="Seu Nome" style="width:100%; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #ddd">
+                <input type="text" id="evNome" placeholder="Seu Nome" style="width:100%; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #ddd">
                 
                 ${[
                     {n: "1. Relevância (20)", max: 20, h: "Impacto para a Enfermagem."},
-                    {n: "2. Metodologia (10)", max: 10, h: "Rigor científico e clareza."},
+                    {n: "2. Metodologia (10)", max: 10, h: "Rigor e clareza."},
                     {n: "3. Visual (10)", max: 10, h: "Organização e design."},
                     {n: "4. Oral (10)", max: 10, h: "Domínio e oratória."},
-                    {n: "5. Aplicabilidade (20)", max: 20, h: "Potencial de uso prático."},
+                    {n: "5. Aplicabilidade (20)", max: 20, h: "Potencial prático."},
                     {n: "6. Originalidade (20)", max: 20, h: "Inovação do tema."}
                 ].map((c, i) => `
                     <div class="crit-row">
-                        <div class="crit-header"><span>${c.n}</span> <span id="v${i}">0</span></div>
-                        <input type="range" id="c${i}" min="0" max="${c.max}" value="0" oninput="v${i}.innerText=this.value">
-                        <small style="color:#777">${c.h}</small>
+                        <div class="crit-header"><span>${c.n} <span class="help-icon" data-help="${c.h}">?</span></span> <span id="v${i}" class="score-val">0</span></div>
+                        <input type="range" id="c${i}" min="0" max="${c.max}" value="0" oninput="document.getElementById('v${i}').innerText=this.value">
                     </div>
                 `).join('')}
 
-                <textarea id="evalObs" placeholder="Observações..." style="width:100%; height:600px; padding:10px; margin-top:10px; border-radius:5px; border:1px solid #ddd"></textarea>
-                <button onclick="sendEval('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px">ENVIAR AVALIAÇÃO</button>
-                <button onclick="evalModal.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Cancelar</button>
+                <textarea id="evObs" placeholder="Comentários adicionais..."></textarea>
+                <button onclick="enviarAval('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px">ENVIAR AVALIAÇÃO</button>
+                <button onclick="mEval.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Cancelar</button>
             </div>`;
         document.body.appendChild(m);
     }
 
-    async function sendEval(id) {
-        const nome = document.getElementById('evalNome').value;
+    async function enviarAval(id) {
+        const nome = document.getElementById('evNome').value;
         if(!nome) return alert("Informe seu nome!");
         setSync(true, "Enviando...");
-        
         const notas = [0,1,2,3,4,5].map(i => parseInt(document.getElementById(`c${i}`).value));
-        const total = notas.reduce((a, b) => a + b, 0);
-
-        const data = { id, avaliador: nome, c1:notas[0], c2:notas[1], c3:notas[2], c4:notas[3], c5:notas[4], c6:notas[5], total, obs: document.getElementById('evalObs').value, presenca: true };
-        
+        const total = notas.reduce((a,b)=>a+b, 0);
+        const data = { id, avaliador: nome, c1:notas[0], c2:notas[1], c3:notas[2], c4:notas[3], c5:notas[4], c6:notas[5], total, obs: evObs.value, presenca: true };
         await fetch(GOOGLE_URL, { method:"POST", mode:"no-cors", body: JSON.stringify(data) });
         alert("Avaliação Registrada!");
         location.reload();
@@ -296,33 +275,25 @@
     function filterAdmin() {
         const txt = document.getElementById('f-txt').value.toLowerCase();
         const mod = document.getElementById('f-mod').value;
-        let t = 0, p = 0, a = 0;
-
         document.querySelectorAll('.row-item').forEach(tr => {
             const match = tr.innerText.toLowerCase().includes(txt) && (mod === "" || tr.dataset.mod.includes(mod));
             tr.style.display = match ? "" : "none";
-            if(match) {
-                t++;
-                if(tr.querySelector('.btn-check.checked')) p++;
-                if(tr.innerText.includes('Avaliado')) a++;
-            }
         });
-        document.getElementById('s-total').innerText = t;
-        document.getElementById('s-pres').innerText = p;
-        document.getElementById('s-aval').innerText = a;
     }
 
-    function view(id) { 
+    function play(id) { 
         session.modoApresentacao = true; 
         session.idSelecionado = id; 
         localStorage.setItem('trabalhoAtivo', JSON.stringify(session)); 
         location.reload(); 
     }
+    
     function voltar() { 
         session.modoApresentacao = false; 
         localStorage.setItem('trabalhoAtivo', JSON.stringify(session)); 
         location.reload(); 
     }
+
     function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
 </script>
 </body>
