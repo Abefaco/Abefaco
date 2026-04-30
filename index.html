@@ -10,63 +10,46 @@
         body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         .bg { background-image: url('fundo-maceio.png'); height: 100%; background-size: cover; background-position: center; position: relative; }
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 84, 166, 0.4); display: flex; justify-content: center; align-items: start; padding-top: 8vh; }
-        
         .search-box { background: white; padding: 35px; border-radius: 20px; width: 90%; max-width: 650px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); text-align: center; }
         .logo { width: 160px; margin-bottom: 15px; }
-        
         h2 { color: var(--azul); margin-bottom: 5px; font-size: 1.4rem; }
         .instrucoes { color: #666; font-size: 0.95rem; margin-bottom: 25px; line-height: 1.4; }
-
         input { width: 100%; padding: 15px 20px; border: 2px solid #ddd; border-radius: 30px; font-size: 1.1rem; outline: none; box-sizing: border-box; transition: 0.3s; }
         input:focus { border-color: var(--azul); box-shadow: 0 0 10px rgba(0, 84, 166, 0.2); }
-        
         #areaSenha { display: none; margin-top: 20px; padding: 20px; background: #f0f7ff; border-radius: 15px; border: 1px solid #cce5ff; animation: slideDown 0.4s; }
         @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
         #resultados { margin-top: 15px; text-align: left; max-height: 350px; overflow-y: auto; border-radius: 10px; }
         .result-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
-        .result-item:last-child { border: none; }
-        .info b { color: var(--azul); display: block; font-size: 0.95rem; margin-bottom: 3px; }
+        .info b { color: var(--azul); display: block; font-size: 0.95rem; }
         .info small { color: #777; font-size: 0.85rem; }
         .btn-play { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-play:hover { background: #1b5e20; transform: scale(1.05); }
-
         .btn-login { background: var(--azul); color: white; border: none; padding: 12px; border-radius: 25px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
-
 <div class="bg">
     <div class="overlay">
         <div class="search-box">
             <img src="logo.png" alt="ABEFACO" class="logo">
             <h2>Pesquise o trabalho</h2>
-            <p class="instrucoes">Use o <b>ID</b>, <b>nome do autor</b> ou <b>nome do trabalho</b> para visualizar.</p>
-            
-            <input type="text" id="campoBusca" placeholder="Digite aqui para buscar..." oninput="filtrarTrabalhos()">
-            
-            <!-- ÁREA RESTRITA -->
+            <p class="instrucoes">Use o <b>ID</b>, <b>nome do autor</b> ou <b>nome do trabalho</b>.</p>
+            <input type="text" id="campoBusca" placeholder="Digite aqui..." oninput="filtrarTrabalhos()">
             <div id="areaSenha">
-                <p style="color: var(--azul); font-weight: bold; margin: 0 0 10px 0;">Acesso ao Painel do Avaliador</p>
-                <input type="password" id="senhaAdmin" placeholder="Digite a senha de acesso">
-                <button class="btn-login" onclick="loginAdmin()">Entrar no Sistema</button>
+                <p style="color: var(--azul); font-weight: bold; margin-bottom: 10px;">Painel do Avaliador</p>
+                <input type="password" id="senhaAdmin" placeholder="Senha de acesso">
+                <button class="btn-login" onclick="loginAdmin()">Entrar</button>
             </div>
-
             <div id="resultados"></div>
         </div>
     </div>
 </div>
-
 <script>
     let db = [];
     const ADMIN_EMAIL = "abefaco@gmail.com";
-    const SENHA_CORRETA = "092026"; // Defina sua senha aqui
+    const SENHA_CORRETA = "abefaco2026";
 
-    // Carrega o CSV localmente para busca instantânea
     Papa.parse("database.csv", {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
+        download: true, header: true, skipEmptyLines: true,
         complete: (res) => { db = res.data; }
     });
 
@@ -74,10 +57,8 @@
         const termo = document.getElementById('campoBusca').value.trim().toLowerCase();
         const areaSenha = document.getElementById('areaSenha');
         const container = document.getElementById('resultados');
-        
         container.innerHTML = "";
 
-        // Se detectar o e-mail admin, abre a trava de senha
         if (termo === ADMIN_EMAIL) {
             areaSenha.style.display = "block";
             container.style.display = "none";
@@ -89,47 +70,39 @@
 
         if (termo.length < 2) return;
 
-        // Busca no CSV carregado
-        const filtrados = db.filter(r => 
-            String(r.Número || "").toLowerCase().includes(termo) ||
-            String(r.Título || "").toLowerCase().includes(termo) ||
-            String(r.Autores || "").toLowerCase().includes(termo)
-        ).slice(0, 15);
+        const filtrados = db.filter(r => {
+            const corresponde = String(r.Número || "").toLowerCase().includes(termo) ||
+                                String(r.Título || "").toLowerCase().includes(termo) ||
+                                String(r.Autores || "").toLowerCase().includes(termo);
+            
+            // FILTRO EXCLUSIVO DA PÁGINA INICIAL: Remove qualquer modalidade Oral
+            const ehEPoster = !String(r.modalidade || "").toLowerCase().includes("oral");
+            return corresponde && ehEPoster;
+        }).slice(0, 15);
 
         filtrados.forEach(r => {
             const div = document.createElement('div');
             div.className = 'result-item';
             div.innerHTML = `
                 <div class="info">
-                    <b>${r.Título.substring(0, 70)}${r.Título.length > 70 ? '...' : ''}</b>
+                    <b>${r.Título.substring(0, 70)}...</b>
                     <small>ID: ${r.Número} • Autor: ${r.Autores.split(',')[0]}</small>
                 </div>
-                <button class="btn-play" onclick="abrirTrabalho('${r.Número}')">PLAY</button>
-            `;
+                <button class="btn-play" onclick="abrirTrabalho('${r.Número}')">PLAY</button>`;
             container.appendChild(div);
         });
     }
 
     function abrirTrabalho(id) {
-        localStorage.setItem('trabalhoAtivo', JSON.stringify({ 
-            Número: id, 
-            modoApresentacao: true,
-            idSelecionado: id 
-        }));
+        localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: id, modoApresentacao: true, idSelecionado: id }));
         window.location.href = "dashboard.html";
     }
 
     function loginAdmin() {
-        const senha = document.getElementById('senhaAdmin').value;
-        if (senha === SENHA_CORRETA) {
-            localStorage.setItem('trabalhoAtivo', JSON.stringify({ 
-                Número: "ADMIN", 
-                modoApresentacao: false 
-            }));
+        if (document.getElementById('senhaAdmin').value === SENHA_CORRETA) {
+            localStorage.setItem('trabalhoAtivo', JSON.stringify({ Número: "ADMIN", modoApresentacao: false }));
             window.location.href = "dashboard.html";
-        } else {
-            alert("Senha incorreta. Tente novamente.");
-        }
+        } else { alert("Senha incorreta."); }
     }
 </script>
 </body>
