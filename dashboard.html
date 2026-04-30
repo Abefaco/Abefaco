@@ -3,85 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel CBEFC 2026 - Gestão e Avaliação</title>
+    <title>Painel CBEFC 2026 - Gestão</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --cinza: #6c757d; }
-        body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #000; }
-
-        /* FUNDO PADRÃO (SÓ APARECE NO ADMIN) */
-        .bg-dashboard {
-            background-image: url('fundo-maceio.png');
-            background-size: cover; background-position: center; background-attachment: fixed;
-            min-height: 100vh; width: 100%; position: relative;
-        }
-        .bg-overlay { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0, 84, 166, 0.4); backdrop-filter: blur(8px); z-index: 1; 
-        }
-
-        /* HEADER */
-        header { 
-            background: var(--branco); padding: 0 25px; height: 70px; position: fixed; top: 0; width: 100%; 
-            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box;
-        }
-
+        body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; background: #000; }
+        .bg-dashboard { background-image: url('fundo-maceio.png'); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; width: 100%; position: relative; }
+        .bg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 84, 166, 0.4); backdrop-filter: blur(8px); z-index: 1; }
+        header { background: var(--branco); padding: 0 25px; height: 70px; position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box; }
         .container { position: relative; z-index: 10; max-width: 1300px; margin: 0 auto; padding: 90px 20px 40px 20px; }
-        .content-box { background: rgba(255, 255, 255, 0.96); padding: 25px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .content-box { background: rgba(255, 255, 255, 0.96); padding: 25px; border-radius: 15px; }
+        
+        /* MODO BANNER 1920x1080 */
+        .modo-banner { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background: #000; display: flex; justify-content: center; align-items: center; }
+        .modo-banner embed { width: 1920px; height: 1080px; max-width: 100%; max-height: 100%; border: none; }
 
-        /* MODO BANNER 1920x1080 (FULLSCREEN) */
-        .modo-banner {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 9999; background: #000; padding: 0; margin: 0;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .modo-banner embed, .modo-banner iframe {
-            width: 1920px; height: 1080px; max-width: 100%; max-height: 100%;
-            border: none;
-        }
-
-        /* ADMIN ELEMENTS */
         .stats-bar { display: flex; gap: 15px; margin-bottom: 20px; }
         .stat-card { flex: 1; background: var(--azul); color: white; padding: 15px; border-radius: 10px; text-align: center; }
         .stat-card span { display: block; font-size: 1.5rem; font-weight: bold; }
         .controles-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; background: white; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85rem; }
-        .btn-check { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; background: #fff; color: transparent; text-align:center; line-height:26px; cursor: default; }
+        .btn-check { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; background: #fff; color: transparent; text-align:center; line-height:26px; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
         .btn-play { background: var(--verde); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-eval { background: var(--azul); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
 
-        /* MODAL */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
         .crit-row { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
-        .crit-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--azul); font-size: 0.9rem; }
+        .crit-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--azul); }
     </style>
 </head>
 <body>
-
 <div id="layoutBase" class="bg-dashboard">
     <div class="bg-overlay"></div>
     <header id="mainHeader">
         <img src="logo.png" alt="ABEFACO" style="height: 45px;">
-        <div id="sync-indicator" style="display:none; align-items:center; gap:8px;">
-            <div class="dot" id="sync-dot"></div> <span id="sync-text">Sincronizando...</span>
-        </div>
+        <div id="sync-indicator" style="display:none; align-items:center; gap:8px;"><div class="dot" id="sync-dot"></div> <span id="sync-text">Sincronizando...</span></div>
         <div>
             <button id="btnVoltar" style="display:none; background:var(--cinza); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;" onclick="voltar()">← Voltar</button>
             <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">Logout</button>
         </div>
     </header>
-
     <div class="container" id="mainArea"></div>
 </div>
-
 <script>
     const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbydKeg03byP8XkxiC8LAkLbtpxN9WnLQLZu2XmlI4Fhvnj_HrVUOJGIXsYPfn2VspokXw/exec";
-    let db = [];
-    let cloudData = [];
-    let session = JSON.parse(localStorage.getItem('trabalhoAtivo'));
+    let db = [], cloudData = [], session = JSON.parse(localStorage.getItem('trabalhoAtivo'));
 
     window.onload = () => {
         Papa.parse("database.csv", {
@@ -89,31 +58,19 @@
             complete: (res) => {
                 db = res.data;
                 if (session.Número === "ADMIN") {
-                    if (session.modoApresentacao) {
-                        renderizarBanner(session.idSelecionado);
-                    } else {
-                        document.getElementById('sync-indicator').style.display = 'flex';
-                        sincronizarPlanilha();
-                    }
-                } else {
-                    renderizarBanner(session.Número);
-                }
+                    if (session.modoApresentacao) renderizarBanner(session.idSelecionado);
+                    else { document.getElementById('sync-indicator').style.display='flex'; sincronizarPlanilha(); }
+                } else { renderizarBanner(session.Número); }
             }
         });
     };
 
     async function sincronizarPlanilha() {
         document.getElementById('sync-dot').classList.add('active');
-        try {
-            const r = await fetch(GOOGLE_URL);
-            cloudData = await r.json();
-            document.getElementById('sync-dot').classList.remove('active');
-            document.getElementById('sync-text').innerText = "Sincronizado";
-            renderizarAdmin();
-        } catch(e) {
-            document.getElementById('sync-text').innerText = "Offline";
-            renderizarAdmin();
-        }
+        try { const r = await fetch(GOOGLE_URL); cloudData = await r.json(); renderizarAdmin(); } 
+        catch(e) { renderizarAdmin(); }
+        document.getElementById('sync-dot').classList.remove('active');
+        document.getElementById('sync-text').innerText = "Sincronizado";
     }
 
     function renderizarAdmin() {
@@ -128,8 +85,8 @@
                     <div class="stat-card"><span id="st-pend">0</span><label>Sem PDF</label></div>
                 </div>
                 <div class="controles-gestao">
-                    <input type="text" id="buscaInt" onkeyup="filtrarTab()" placeholder="Filtrar por nome ou ID...">
-                    <select id="fMod" onchange="filtrarTab()"><option value="todos">Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
+                    <input type="text" id="buscaInt" onkeyup="filtrarTab()" placeholder="Pesquisar...">
+                    <select id="fMod" onchange="filtrarTab()"><option value="todos">Todas Modalidades</option><option value="e-Poster">e-Poster</option><option value="Oral">Oral</option></select>
                     <select id="fPdf" onchange="filtrarTab()"><option value="todos">Status PDF</option><option value="sim">Enviado</option><option value="nao">Pendente</option></select>
                 </div>
                 <div style="overflow-x:auto">
@@ -146,11 +103,8 @@
                                     <td>${row.Título.substring(0,55)}...</td>
                                     <td class="pdf-status" data-id="${id}">...</td>
                                     <td>${isAval ? '<b style="color:green">Avaliado</b>' : 'Pendente'}</td>
-                                    <td>
-                                        <button onclick="verTrabalho('${id}')" class="btn-play">Ver</button>
-                                        <button onclick="abrirAval('${id}')" class="btn-eval">Avaliar</button>
-                                    </td>
-                                </tr>`;
+                                    <td><button onclick="verTrabalho('${id}')" class="btn-play">Ver</button>
+                                        <button onclick="abrirAval('${id}')" class="btn-eval">Avaliar</button></td></tr>`;
                             }).join('')}
                         </tbody>
                     </table>
@@ -160,27 +114,22 @@
     }
 
     function renderizarBanner(id) {
-        // LIMPA TUDO PARA O MODO BANNER
         document.getElementById('layoutBase').className = ""; 
         document.getElementById('mainHeader').style.display = "none";
         const area = document.getElementById('mainArea');
         area.className = "modo-banner";
-        
         const path = `posters/${id}.pdf`;
         fetch(path, { method: 'HEAD' }).then(res => {
             area.innerHTML = res.ok 
                 ? `<embed src="${path}#toolbar=0&navpanes=0&scrollbar=0&view=Fit" type="application/pdf">` 
-                : `<div style="color:white; text-align:center;"><h1>PDF ${id} não localizado na pasta posters/</h1><button onclick="voltar()" style="padding:10px; cursor:pointer;">Voltar</button></div>`;
+                : `<div style="color:white;text-align:center;"><h1>PDF não localizado</h1><button onclick="voltar()">Voltar</button></div>`;
         });
-
-        // Adiciona um listener de tecla para sair do modo banner com "ESC"
-        window.addEventListener('keydown', function(e) { if(e.key === "Escape") voltar(); }, {once: true});
+        window.addEventListener('keydown', (e) => { if(e.key === "Escape") voltar(); }, {once: true});
     }
 
     function verificarArquivos() {
         document.querySelectorAll('.pdf-status').forEach(td => {
-            const id = td.dataset.id;
-            fetch(`posters/${id}.pdf`, { method: 'HEAD' }).then(res => {
+            fetch(`posters/${td.dataset.id}.pdf`, { method: 'HEAD' }).then(res => {
                 td.innerHTML = res.ok ? "✅" : "❌";
                 td.closest('tr').dataset.pdf = res.ok ? "sim" : "nao";
                 filtrarTab();
@@ -190,71 +139,38 @@
 
     function filtrarTab() {
         const termo = document.getElementById('buscaInt').value.toLowerCase();
-        const mod = document.getElementById('fMod').value;
-        const pdf = document.getElementById('fPdf').value;
-        let t = 0, p = 0, n = 0;
+        const mod = document.getElementById('fMod').value, pdf = document.getElementById('fPdf').value;
+        let t=0, p=0, n=0;
         document.querySelectorAll('.row-item').forEach(tr => {
-            const match = tr.innerText.toLowerCase().includes(termo) && 
-                          (mod === "todos" || tr.dataset.mod.includes(mod)) &&
-                          (pdf === "todos" || tr.dataset.pdf === pdf);
+            const match = tr.innerText.toLowerCase().includes(termo) && (mod === "todos" || tr.dataset.mod.includes(mod)) && (pdf === "todos" || tr.dataset.pdf === pdf);
             tr.style.display = match ? "" : "none";
             if(match) { t++; if(tr.querySelector('.btn-check').classList.contains('checked')) p++; if(tr.dataset.pdf === "nao") n++; }
         });
-        document.getElementById('st-total').innerText = t;
-        document.getElementById('st-pres').innerText = p;
-        document.getElementById('st-pend').innerText = n;
+        document.getElementById('st-total').innerText = t; document.getElementById('st-pres').innerText = p; document.getElementById('st-pend').innerText = n;
     }
 
-    function verTrabalho(id) {
-        session.modoApresentacao = true;
-        session.idSelecionado = id;
-        localStorage.setItem('trabalhoAtivo', JSON.stringify(session));
-        renderizarBanner(id);
-    }
+    function verTrabalho(id) { session.modoApresentacao = true; session.idSelecionado = id; localStorage.setItem('trabalhoAtivo', JSON.stringify(session)); renderizarBanner(id); }
 
     function abrirAval(id) {
-        const m = document.createElement('div');
-        m.className = 'modal'; m.id = 'mEval';
-        m.innerHTML = `
-            <div class="modal-content">
-                <h3 style="color:var(--azul)">Avaliação - ID ${id}</h3>
-                <input type="text" id="evNome" placeholder="Nome do Avaliador" style="width:100%; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #ddd">
-                ${[
-                    {n: "1. Relevância (20)", max: 20}, {n: "2. Metodologia (10)", max: 10},
-                    {n: "3. Visual (10)", max: 10}, {n: "4. Oral (10)", max: 10},
-                    {n: "5. Aplicabilidade (20)", max: 20}, {n: "6. Originalidade (20)", max: 20}
-                ].map((c, i) => `
-                    <div class="crit-row">
-                        <div class="crit-header"><span>${c.n}</span> <span id="v${i}">0</span></div>
-                        <input type="range" id="c${i}" min="0" max="${c.max}" value="0" style="width:100%" oninput="document.getElementById('v${i}').innerText=this.value">
-                    </div>`).join('')}
-                <button onclick="enviarAval('${id}')" style="width:100%; background:var(--verde); color:white; padding:15px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px">SALVAR E MARCAR PRESENÇA</button>
-                <button onclick="mEval.remove()" style="width:100%; background:#eee; border:none; padding:10px; margin-top:5px; border-radius:8px; cursor:pointer">Cancelar</button>
-            </div>`;
+        const m = document.createElement('div'); m.className = 'modal'; m.id = 'mEval';
+        m.innerHTML = `<div class="modal-content"><h3>Avaliação - ID ${id}</h3><input type="text" id="evNome" placeholder="Seu Nome" style="width:100%;padding:10px;margin-bottom:15px;border:1px solid #ddd">
+                ${[{n:"1. Relevância (20)",m:20},{n:"2. Metodologia (10)",m:10},{n:"3. Visual (10)",m:10},{n:"4. Oral (10)",m:10},{n:"5. Aplicabilidade (20)",m:20},{n:"6. Originalidade (20)",m:20}].map((c,i)=>`
+                    <div class="crit-row"><div class="crit-header"><span>${c.n}</span> <span id="v${i}">0</span></div><input type="range" id="c${i}" min="0" max="${c.m}" value="0" style="width:100%" oninput="document.getElementById('v${i}').innerText=this.value"></div>`).join('')}
+                <button onclick="enviarAval('${id}')" style="width:100%;background:var(--verde);color:white;padding:15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;margin-top:15px">SALVAR E MARCAR PRESENÇA</button>
+                <button onclick="mEval.remove()" style="width:100%;background:#eee;border:none;padding:10px;margin-top:5px;border-radius:8px;cursor:pointer">Cancelar</button></div>`;
         document.body.appendChild(m);
     }
 
     async function enviarAval(id) {
-        const nome = document.getElementById('evNome').value;
-        if(!nome) return alert("Informe seu nome!");
+        const nome = document.getElementById('evNome').value; if(!nome) return alert("Informe seu nome!");
         const notas = [0,1,2,3,4,5].map(i => parseInt(document.getElementById(`c${i}`).value));
         const total = notas.reduce((a,b)=>a+b, 0);
         const data = { id, avaliador: nome, total, presenca: true, c1:notas[0], c2:notas[1], c3:notas[2], c4:notas[3], c5:notas[4], c6:notas[5] };
         await fetch(GOOGLE_URL, { method:"POST", mode:"no-cors", body: JSON.stringify(data) });
-        alert("Avaliação e Presença Registradas!");
-        location.reload();
+        alert("Avaliação e Presença Registradas!"); location.reload();
     }
 
-    function voltar() {
-        if (session.Número === "ADMIN") {
-            session.modoApresentacao = false;
-            localStorage.setItem('trabalhoAtivo', JSON.stringify(session));
-            location.reload(); 
-        } else {
-            sair();
-        }
-    }
-
+    function voltar() { if (session.Número === "ADMIN") { session.modoApresentacao = false; localStorage.setItem('trabalhoAtivo', JSON.stringify(session)); location.reload(); } else { sair(); } }
     function sair() { localStorage.removeItem('trabalhoAtivo'); window.location.href = "index.html"; }
 </script>
 </body>
