@@ -7,8 +7,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --azul: #0054A6; --fundo: #f4f7f6; --branco: #ffffff; --verde: #2e7d32; --vermelho: #d32f2f; --cinza: #6c757d; }
-        body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
+        body, html { height: 100%; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #000; }
 
+        /* FUNDO PADRÃO (SÓ APARECE NO ADMIN) */
         .bg-dashboard {
             background-image: url('fundo-maceio.png');
             background-size: cover; background-position: center; background-attachment: fixed;
@@ -19,55 +20,57 @@
             background: rgba(0, 84, 166, 0.4); backdrop-filter: blur(8px); z-index: 1; 
         }
 
+        /* HEADER */
         header { 
             background: var(--branco); padding: 0 25px; height: 70px; position: fixed; top: 0; width: 100%; 
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border-bottom: 4px solid var(--azul); box-sizing: border-box;
         }
 
-        #sync-indicator { display: none; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--cinza); font-weight: bold; }
-        .dot { width: 10px; height: 10px; background: #ccc; border-radius: 50%; }
-        .dot.active { background: #007bff; box-shadow: 0 0 8px #007bff; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
         .container { position: relative; z-index: 10; max-width: 1300px; margin: 0 auto; padding: 90px 20px 40px 20px; }
         .content-box { background: rgba(255, 255, 255, 0.96); padding: 25px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
 
+        /* MODO BANNER 1920x1080 (FULLSCREEN) */
+        .modo-banner {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 9999; background: #000; padding: 0; margin: 0;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .modo-banner embed, .modo-banner iframe {
+            width: 1920px; height: 1080px; max-width: 100%; max-height: 100%;
+            border: none;
+        }
+
+        /* ADMIN ELEMENTS */
         .stats-bar { display: flex; gap: 15px; margin-bottom: 20px; }
         .stat-card { flex: 1; background: var(--azul); color: white; padding: 15px; border-radius: 10px; text-align: center; }
         .stat-card span { display: block; font-size: 1.5rem; font-weight: bold; }
-        
-        .controles-gestao { 
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-            gap: 10px; margin-bottom: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd;
-        }
-        .controles-gestao input, .controles-gestao select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; font-size: 0.85rem; }
-
+        .controles-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85rem; }
-
-        .btn-check { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; background: #fff; cursor: default; color: transparent; text-align:center; line-height:26px; }
+        .btn-check { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ddd; background: #fff; color: transparent; text-align:center; line-height:26px; cursor: default; }
         .btn-check.checked { background: var(--verde); border-color: var(--verde); color: white; }
         .btn-play { background: var(--verde); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-eval { background: var(--azul); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
 
+        /* MODAL */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
         .crit-row { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
         .crit-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--azul); font-size: 0.9rem; }
-        
-        iframe, embed { width: 100%; height: 78vh; border-radius: 8px; background: #333; border: none; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
     </style>
 </head>
 <body>
 
-<div class="bg-dashboard">
+<div id="layoutBase" class="bg-dashboard">
     <div class="bg-overlay"></div>
-    <header>
+    <header id="mainHeader">
         <img src="logo.png" alt="ABEFACO" style="height: 45px;">
-        <div id="sync-indicator"><div class="dot" id="sync-dot"></div> <span id="sync-text">Sincronizando...</span></div>
+        <div id="sync-indicator" style="display:none; align-items:center; gap:8px;">
+            <div class="dot" id="sync-dot"></div> <span id="sync-text">Sincronizando...</span>
+        </div>
         <div>
             <button id="btnVoltar" style="display:none; background:var(--cinza); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;" onclick="voltar()">← Voltar</button>
-            <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">Sair / Logout</button>
+            <button onclick="sair()" style="background:var(--vermelho); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">Logout</button>
         </div>
     </header>
 
@@ -80,18 +83,20 @@
     let cloudData = [];
     let session = JSON.parse(localStorage.getItem('trabalhoAtivo'));
 
-    if (!session) window.location.href = "index.html";
-
     window.onload = () => {
         Papa.parse("database.csv", {
             download: true, header: true, skipEmptyLines: true,
             complete: (res) => {
                 db = res.data;
                 if (session.Número === "ADMIN") {
-                    document.getElementById('sync-indicator').style.display = 'flex';
-                    sincronizarPlanilha();
+                    if (session.modoApresentacao) {
+                        renderizarBanner(session.idSelecionado);
+                    } else {
+                        document.getElementById('sync-indicator').style.display = 'flex';
+                        sincronizarPlanilha();
+                    }
                 } else {
-                    renderizarPoster(session.Número);
+                    renderizarBanner(session.Número);
                 }
             }
         });
@@ -113,7 +118,8 @@
 
     function renderizarAdmin() {
         const area = document.getElementById('mainArea');
-        document.getElementById('btnVoltar').style.display = 'none'; 
+        document.getElementById('layoutBase').className = "bg-dashboard";
+        document.getElementById('mainHeader').style.display = "flex";
         area.innerHTML = `
             <div class="content-box">
                 <div class="stats-bar">
@@ -134,7 +140,7 @@
                                 const id = String(row.Número);
                                 const isPres = cloudData.some(c => String(c.id) === id && c.presenca);
                                 const isAval = cloudData.some(c => String(c.id) === id && c.total > 0);
-                                return `<tr class="row-item" data-mod="${row.modalidade || ''}" data-aval="${isAval?'sim':'nao'}">
+                                return `<tr class="row-item" data-mod="${row.modalidade || ''}">
                                     <td><button class="btn-check ${isPres?'checked':''}">✓</button></td>
                                     <td><b>${id}</b></td>
                                     <td>${row.Título.substring(0,55)}...</td>
@@ -151,6 +157,24 @@
                 </div>
             </div>`;
         verificarArquivos();
+    }
+
+    function renderizarBanner(id) {
+        // LIMPA TUDO PARA O MODO BANNER
+        document.getElementById('layoutBase').className = ""; 
+        document.getElementById('mainHeader').style.display = "none";
+        const area = document.getElementById('mainArea');
+        area.className = "modo-banner";
+        
+        const path = `posters/${id}.pdf`;
+        fetch(path, { method: 'HEAD' }).then(res => {
+            area.innerHTML = res.ok 
+                ? `<embed src="${path}#toolbar=0&navpanes=0&scrollbar=0&view=Fit" type="application/pdf">` 
+                : `<div style="color:white; text-align:center;"><h1>PDF ${id} não localizado na pasta posters/</h1><button onclick="voltar()" style="padding:10px; cursor:pointer;">Voltar</button></div>`;
+        });
+
+        // Adiciona um listener de tecla para sair do modo banner com "ESC"
+        window.addEventListener('keydown', function(e) { if(e.key === "Escape") voltar(); }, {once: true});
     }
 
     function verificarArquivos() {
@@ -185,18 +209,7 @@
         session.modoApresentacao = true;
         session.idSelecionado = id;
         localStorage.setItem('trabalhoAtivo', JSON.stringify(session));
-        renderizarPoster(id);
-    }
-
-    function renderizarPoster(id) {
-        document.getElementById('btnVoltar').style.display = 'inline-block';
-        const area = document.getElementById('mainArea');
-        const trab = db.find(r => String(r.Número) === String(id));
-        area.innerHTML = `<div class="content-box"><h2 style="color:var(--azul);">${trab?trab.Título:'ID '+id}</h2><div id="pdfSpace"></div></div>`;
-        const path = `posters/${id}.pdf`;
-        fetch(path, { method: 'HEAD' }).then(res => {
-            document.getElementById('pdfSpace').innerHTML = res.ok ? `<embed src="${path}#toolbar=0">` : `<div style="text-align:center; padding:40px;"><h3>PDF não encontrado na pasta /posters/.</h3></div>`;
-        });
+        renderizarBanner(id);
     }
 
     function abrirAval(id) {
@@ -224,7 +237,6 @@
     async function enviarAval(id) {
         const nome = document.getElementById('evNome').value;
         if(!nome) return alert("Informe seu nome!");
-        document.getElementById('sync-text').innerText = "Enviando...";
         const notas = [0,1,2,3,4,5].map(i => parseInt(document.getElementById(`c${i}`).value));
         const total = notas.reduce((a,b)=>a+b, 0);
         const data = { id, avaliador: nome, total, presenca: true, c1:notas[0], c2:notas[1], c3:notas[2], c4:notas[3], c5:notas[4], c6:notas[5] };
@@ -237,7 +249,7 @@
         if (session.Número === "ADMIN") {
             session.modoApresentacao = false;
             localStorage.setItem('trabalhoAtivo', JSON.stringify(session));
-            renderizarAdmin();
+            location.reload(); 
         } else {
             sair();
         }
